@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// One row per editable section on a page. `content` holds that section's
+// text/image fields as JSON — shape is defined per sectionKey in
+// lib/cms/sections.config.ts, not enforced at the DB layer.
+model PageSection {
+  id         String   @id @default(cuid())
+  page       String
+  sectionKey String
+  label      String
+  enabled    Boolean  @default(true)
+  sortOrder  Int
+  content    Json
+  updatedAt  DateTime @updatedAt
+
+  @@unique([page, sectionKey], name: "page_sectionKey")
+  @@index([page])
+}
+
+// Storefront products. featuredTags drives which homepage list sections
+// (weekly_best_seller, deals_of_the_day, recently_added, top_selling,
+// top_rated) a product appears in — a product can carry multiple tags.
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  pack         String?
+  price        String
+  oldPrice     String?
+  rating       Int      @default(5)
+  image        String?
+  featuredTags String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([featuredTags], type: Gin)
+}
+
+// Server-side login lockout tracking. Keyed by email, not in-memory, since
+// Vercel serverless functions don't share process memory across invocations.
+model LoginAttempt {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  failedCount   Int       @default(0)
+  lockedUntil   DateTime?
+  lastAttemptAt DateTime  @updatedAt
+}

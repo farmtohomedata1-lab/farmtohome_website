@@ -1,65 +1,120 @@
-import Image from "next/image";
+import TopBar from "@/components/home/TopBar";
+import SiteHeader from "@/components/home/SiteHeader";
+import NavBar from "@/components/home/NavBar";
+import Hero from "@/components/home/Hero";
+import CategoryStrip from "@/components/home/CategoryStrip";
+import PromoBanners from "@/components/home/PromoBanners";
+import WeeklyBestSeller from "@/components/home/WeeklyBestSeller";
+import FeatureBand from "@/components/home/FeatureBand";
+import DealsOfTheDay from "@/components/home/DealsOfTheDay";
+import WeekendBanner from "@/components/home/WeekendBanner";
+import CollectionGrid, { type CollectionPanel } from "@/components/home/CollectionGrid";
+import BlogSection from "@/components/home/BlogSection";
+import Footer from "@/components/home/Footer";
+import { getFeaturedProducts, getSectionContent } from "@/lib/cms/getSectionContent";
+import type {
+  BlogContent,
+  Category,
+  Feature,
+  HeroContent,
+  PromoBanner,
+  WeekendBannerContent,
+} from "@/content/homepage";
 
-export default function Home() {
+interface HeadingContent {
+  heading?: string;
+}
+
+interface CollectionSectionContent {
+  heading?: string;
+  seeMoreLabel?: string;
+}
+
+export default async function Home() {
+  const [
+    hero,
+    categoryStrip,
+    promoBanners,
+    weeklyBestSeller,
+    weeklyBestSellerProducts,
+    featureBand,
+    dealsOfTheDay,
+    dealsOfTheDayProducts,
+    weekendBanner,
+    recentlyAdded,
+    recentlyAddedProducts,
+    topSelling,
+    topSellingProducts,
+    topRated,
+    topRatedProducts,
+    blogInsights,
+  ] = await Promise.all([
+    getSectionContent<HeroContent>("home", "hero"),
+    getSectionContent<{ categories: Category[] }>("home", "category_strip"),
+    getSectionContent<{ banners: PromoBanner[] }>("home", "promo_banners"),
+    getSectionContent<HeadingContent>("home", "weekly_best_seller"),
+    getFeaturedProducts("weekly_best_seller"),
+    getSectionContent<{ features: Feature[] }>("home", "feature_band"),
+    getSectionContent<HeadingContent>("home", "deals_of_the_day"),
+    getFeaturedProducts("deals_of_the_day"),
+    getSectionContent<WeekendBannerContent>("home", "weekend_banner"),
+    getSectionContent<CollectionSectionContent>("home", "recently_added"),
+    getFeaturedProducts("recently_added"),
+    getSectionContent<CollectionSectionContent>("home", "top_selling"),
+    getFeaturedProducts("top_selling"),
+    getSectionContent<CollectionSectionContent>("home", "top_rated"),
+    getFeaturedProducts("top_rated"),
+    getSectionContent<BlogContent>("home", "blog_insights"),
+  ]);
+
+  const collectionPanels: CollectionPanel[] = [
+    {
+      key: "recently_added",
+      heading: recentlyAdded?.content.heading,
+      seeMoreLabel: recentlyAdded?.content.seeMoreLabel,
+      products: recentlyAdded ? recentlyAddedProducts : [],
+    },
+    {
+      key: "top_selling",
+      heading: topSelling?.content.heading,
+      seeMoreLabel: topSelling?.content.seeMoreLabel,
+      products: topSelling ? topSellingProducts : [],
+    },
+    {
+      key: "top_rated",
+      heading: topRated?.content.heading,
+      seeMoreLabel: topRated?.content.seeMoreLabel,
+      products: topRated ? topRatedProducts : [],
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <TopBar />
+      <SiteHeader />
+      <NavBar />
+      <main>
+        {hero && <Hero content={hero.content} />}
+        {categoryStrip && <CategoryStrip categories={categoryStrip.content.categories} />}
+        {promoBanners && <PromoBanners banners={promoBanners.content.banners} />}
+        {weeklyBestSeller && (
+          <WeeklyBestSeller
+            heading={weeklyBestSeller.content.heading}
+            products={weeklyBestSellerProducts}
+          />
+        )}
+        {featureBand && <FeatureBand features={featureBand.content.features} />}
+        {dealsOfTheDay && (
+          <DealsOfTheDay
+            heading={dealsOfTheDay.content.heading}
+            products={dealsOfTheDayProducts}
+          />
+        )}
+        {weekendBanner && <WeekendBanner content={weekendBanner.content} />}
+        <CollectionGrid panels={collectionPanels} />
+        {blogInsights && <BlogSection content={blogInsights.content} />}
       </main>
-    </div>
+      <Footer />
+    </>
   );
 }
