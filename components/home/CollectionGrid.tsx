@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import type { FeaturedProduct } from "@/lib/cms/getSectionContent";
 import { buttonMotion, fadeUp, stagger, viewportOnce } from "./motion";
 import ProductCard from "./ProductCard";
+
+const MotionLink = motion.create(Link);
 
 export interface CollectionPanel {
   key: string;
@@ -33,13 +36,13 @@ export default function CollectionGrid({ panels }: { panels: CollectionPanel[] }
                 <h2 className="text-lg font-bold text-dark-green">{panel.heading}</h2>
               )}
               {panel.seeMoreLabel && (
-                <motion.a
+                <MotionLink
                   {...buttonMotion}
-                  href="#"
+                  href={`/shop?tag=${panel.key}`}
                   className="rounded-md bg-brand-green px-4 py-2 text-xs font-semibold text-white"
                 >
                   {panel.seeMoreLabel}
-                </motion.a>
+                </MotionLink>
               )}
             </motion.div>
             <div className="mt-4 grid grid-cols-2 gap-4">

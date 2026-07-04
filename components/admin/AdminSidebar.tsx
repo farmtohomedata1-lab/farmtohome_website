@@ -34,21 +34,68 @@ export default function AdminSidebar() {
       </ul>
 
       <p className="mt-6 px-5 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-        Catalog
+        Orders
       </p>
       <ul>
         <li>
           <Link
-            href="/admin/products"
+            href="/admin/orders"
             className={`block px-5 py-2.5 text-sm font-medium transition-colors ${
-              pathname.startsWith("/admin/products")
+              pathname.startsWith("/admin/orders")
                 ? "border-l-2 border-brand-green bg-brand-green/5 text-dark-green"
                 : "border-l-2 border-transparent text-gray-600 hover:bg-gray-50"
             }`}
           >
-            Products
+            All Orders
           </Link>
         </li>
+      </ul>
+
+      <p className="mt-6 px-5 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        Catalog
+      </p>
+      <ul>
+        {[
+          { href: "/admin/products", label: "Products" },
+          { href: "/admin/categories", label: "Categories" },
+          { href: "/admin/brands", label: "Brands" },
+        ].map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className={`block px-5 py-2.5 text-sm font-medium transition-colors ${
+                pathname.startsWith(link.href)
+                  ? "border-l-2 border-brand-green bg-brand-green/5 text-dark-green"
+                  : "border-l-2 border-transparent text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-6 px-5 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        Settings
+      </p>
+      <ul>
+        {[
+          { href: "/admin/shipping-settings", label: "Shipping Settings" },
+          { href: "/admin/coupons", label: "Coupons" },
+        ].map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className={`block px-5 py-2.5 text-sm font-medium transition-colors ${
+                pathname.startsWith(link.href)
+                  ? "border-l-2 border-brand-green bg-brand-green/5 text-dark-green"
+                  : "border-l-2 border-transparent text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
       </ul>
     </nav>
   );

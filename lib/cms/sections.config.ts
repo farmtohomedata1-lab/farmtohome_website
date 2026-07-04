@@ -50,6 +50,9 @@ export interface SectionDef {
 export const pages: PageDef[] = [
   { page: "home", label: "Home Page" },
   { page: "about", label: "About Us Page" },
+  { page: "shop", label: "Shop Page" },
+  { page: "cart", label: "Cart Page" },
+  { page: "wishlist", label: "Wishlist Page" },
 ];
 
 const featureIconOptions: SelectOption[] = [
@@ -351,6 +354,56 @@ export const sections: SectionDef[] = [
     sectionKey: "feature_band",
     label: "Feature Band",
     sortOrder: 7,
+    fields: [featureListField],
+  },
+
+  // ---------- Shop ----------
+  {
+    page: "shop",
+    sectionKey: "hero",
+    label: "Page Heading",
+    sortOrder: 1,
+    fields: [
+      { key: "breadcrumbLabel", label: "Breadcrumb Label", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+    ],
+  },
+
+  // ---------- Cart ----------
+  {
+    page: "cart",
+    sectionKey: "hero",
+    label: "Page Heading",
+    sortOrder: 1,
+    fields: [
+      { key: "breadcrumbLabel", label: "Breadcrumb Label", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+    ],
+  },
+  {
+    page: "cart",
+    sectionKey: "feature_band",
+    label: "Feature Band",
+    sortOrder: 2,
+    fields: [featureListField],
+  },
+
+  // ---------- Wishlist ----------
+  {
+    page: "wishlist",
+    sectionKey: "hero",
+    label: "Page Heading",
+    sortOrder: 1,
+    fields: [
+      { key: "breadcrumbLabel", label: "Breadcrumb Label", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+    ],
+  },
+  {
+    page: "wishlist",
+    sectionKey: "feature_band",
+    label: "Feature Band",
+    sortOrder: 2,
     fields: [featureListField],
   },
 ];

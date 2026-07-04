@@ -10,10 +10,14 @@ export default async function ProductsPage({
   const { tag } = await searchParams;
   const activeTag = tag && productTags.some((t) => t.value === tag) ? tag : undefined;
 
-  const products = await prisma.product.findMany({
-    where: activeTag ? { featuredTags: { has: activeTag } } : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+  const [products, categories, brands] = await Promise.all([
+    prisma.product.findMany({
+      where: activeTag ? { featuredTags: { has: activeTag } } : undefined,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.brand.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div>
@@ -27,14 +31,21 @@ export default async function ProductsPage({
           id: p.id,
           name: p.name,
           pack: p.pack ?? "",
-          price: p.price,
-          oldPrice: p.oldPrice ?? "",
+          price: p.price.toNumber(),
+          compareAtPrice: p.compareAtPrice ? p.compareAtPrice.toNumber() : null,
+          discountActive: p.discountActive,
+          inStock: p.inStock,
           rating: p.rating,
           image: p.image ?? "",
           featuredTags: p.featuredTags,
+          categoryId: p.categoryId ?? "",
+          brandId: p.brandId ?? "",
+          detailedDescription: p.detailedDescription ?? "",
         }))}
         availableTags={productTags}
         activeTag={activeTag}
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        brands={brands.map((b) => ({ id: b.id, name: b.name }))}
       />
     </div>
   );

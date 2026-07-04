@@ -4,7 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 const LAST_ACTIVE_COOKIE = "admin_last_active";
 const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-export async function proxy(request: NextRequest) {
+// Same distinct cookie name as lib/supabase/customerServer.ts /
+// customerClient.ts — keeps the customer session fully independent from the
+// admin session below, so logging in as one never clobbers the other in the
+// same browser.
+const CUSTOMER_COOKIE_NAME = "sb-customer-auth";
+
+async function handleAdminRoute(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -72,6 +78,52 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
+async function handleCustomerRoute(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookieOptions: { name: CUSTOMER_COOKIE_NAME },
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) return response;
+
+  // Not logged in — bounce to the login screen, carrying the exact path back
+  // so a successful login lands straight back here (e.g. /checkout), never
+  // through the cart or homepage first.
+  const redirectUrl = new URL("/login", request.url);
+  redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
+  return NextResponse.redirect(redirectUrl);
+}
+
+export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    return handleAdminRoute(request);
+  }
+  return handleCustomerRoute(request);
+}
+
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/checkout"],
 };

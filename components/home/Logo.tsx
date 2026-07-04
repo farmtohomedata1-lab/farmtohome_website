@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { IconLeaf } from "./icons";
 
 export default function Logo({
@@ -8,7 +9,7 @@ export default function Logo({
   suffix: string;
 }) {
   return (
-    <a href="#" className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2">
       <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white">
         <IconLeaf className="h-5 w-5 text-brand-green" />
       </span>
@@ -16,6 +17,6 @@ export default function Logo({
         {prefix}
         <span className="font-medium">{suffix}</span>
       </span>
-    </a>
+    </Link>
   );
 }

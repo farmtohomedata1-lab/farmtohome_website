@@ -1,0 +1,95 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { formatPrice } from "@/lib/format";
+import { computeDiscountPercent } from "@/lib/pricing";
+import { useWishlistStore } from "@/lib/wishlistStore";
+import { IconHeart } from "@/components/home/icons";
+import CartQuantityControl from "@/components/product/CartQuantityControl";
+
+export interface ShopProduct {
+  id: string;
+  name: string;
+  pack: string | null;
+  price: number;
+  compareAtPrice: number | null;
+  isOnSale: boolean;
+  inStock: boolean;
+  image: string | null;
+}
+
+export default function ShopProductCard({ product }: { product: ShopProduct }) {
+  const isWishlisted = useWishlistStore((state) => state.items.some((i) => i.id === product.id));
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+
+  const discountPercent =
+    product.isOnSale && product.compareAtPrice != null
+      ? computeDiscountPercent(product.price, product.compareAtPrice)
+      : null;
+
+  return (
+    <article className="relative flex flex-col rounded-md border border-gray-200 bg-white p-4">
+      {discountPercent != null && discountPercent > 0 && (
+        <span className="absolute left-3 top-3 z-10 rounded-sm bg-sale-red px-2 py-1 text-[10px] font-bold uppercase text-white">
+          {discountPercent}% Off
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() =>
+          toggleWishlist({
+            id: product.id,
+            name: product.name,
+            pack: product.pack,
+            price: product.price,
+            compareAtPrice: product.compareAtPrice,
+            isOnSale: product.isOnSale,
+            inStock: product.inStock,
+            image: product.image,
+          })
+        }
+        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        aria-pressed={isWishlisted}
+        className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
+      >
+        <IconHeart
+          className={`h-3.5 w-3.5 ${isWishlisted ? "fill-sale-red text-sale-red" : "text-gray-400"}`}
+        />
+      </button>
+
+      <Link href={`/product/${product.id}`} className="flex h-32 items-center justify-center py-2">
+        {product.image && (
+          <Image
+            src={product.image}
+            alt={product.name}
+            width={120}
+            height={120}
+            unoptimized
+            className="h-28 w-28 object-contain"
+          />
+        )}
+      </Link>
+
+      <Link href={`/product/${product.id}`}>
+        <h3 className="mt-2 line-clamp-2 text-[13px] font-semibold leading-snug text-dark-green hover:underline">
+          {product.name}
+        </h3>
+      </Link>
+      {product.pack && <p className="mt-1 text-xs text-gray-400">{product.pack}</p>}
+
+      <p className="mt-2 flex items-baseline gap-2">
+        <span className="text-base font-bold text-sale-red">{formatPrice(product.price)}</span>
+        {product.compareAtPrice != null && (
+          <span className="text-xs text-gray-400 line-through">
+            {formatPrice(product.compareAtPrice)}
+          </span>
+        )}
+      </p>
+
+      <div className="mt-3">
+        <CartQuantityControl product={product} variant="card" />
+      </div>
+    </article>
+  );
+}

@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { header, navBar } from "@/content/homepage";
+import { useCartStore, selectCartTotalCount } from "@/lib/cartStore";
+import { useWishlistStore, selectWishlistCount } from "@/lib/wishlistStore";
+import { useHydrated } from "@/lib/useHydrated";
+import { getCustomerHeaderInfo, type CustomerHeaderInfo } from "@/lib/auth/getCustomerHeaderInfo";
+import AccountMenu from "./AccountMenu";
 import { fadeIn, buttonMotion } from "./motion";
 import {
   IconCart,
@@ -17,11 +24,24 @@ import {
 } from "./icons";
 import Logo from "./Logo";
 
+const MotionLink = motion.create(Link);
+
 function SearchBar() {
+  const router = useRouter();
+
+  // Deliberately uncontrolled + never prefilled from the current URL's `q`,
+  // so this component doesn't need useSearchParams() (which would force a
+  // Suspense boundary around SiteHeader on every page that renders it).
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const term = String(new FormData(e.currentTarget).get("q") ?? "").trim();
+    router.push(term ? `/shop?q=${encodeURIComponent(term)}` : "/shop");
+  }
+
   return (
     <form
       role="search"
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={handleSubmit}
       className="flex w-full items-stretch overflow-hidden rounded-md bg-white"
     >
       <button
@@ -34,6 +54,7 @@ function SearchBar() {
       </button>
       <input
         type="search"
+        name="q"
         placeholder={header.searchPlaceholder}
         className="min-w-0 flex-1 px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
       />
@@ -51,15 +72,42 @@ function SearchBar() {
 
 function CountBadge({ count }: { count: number }) {
   return (
-    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-green text-[10px] font-bold text-white">
+    <motion.span
+      key={count}
+      initial={{ scale: 1.5 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", stiffness: 500, damping: 15 }}
+      className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-green text-[10px] font-bold text-white"
+    >
       {count}
-    </span>
+    </motion.span>
   );
 }
 
 export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const cartCount = useCartStore(selectCartTotalCount);
+  const wishlistCount = useWishlistStore(selectWishlistCount);
+  // The persisted cart/wishlist stores only rehydrate from localStorage
+  // after mount, so the very first client render must match the server's
+  // (0) to avoid a hydration warning — swap in the real counts right after.
+  const mounted = useHydrated();
+
+  // Client-fetched (not passed as a prop) so every page can render
+  // <SiteHeader /> with zero props, same as the cart/wishlist state above.
+  // Starts at null on both server and first client render — no hydration
+  // mismatch risk, since nothing here reads localStorage.
+  const [customerInfo, setCustomerInfo] = useState<CustomerHeaderInfo | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getCustomerHeaderInfo().then((info) => {
+      if (!cancelled) setCustomerInfo(info);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   return (
     <motion.header
@@ -90,36 +138,40 @@ export default function SiteHeader() {
         </div>
 
         <div className="ml-auto flex items-center gap-3 lg:ml-0">
-          <motion.a
+          {customerInfo ? (
+            <AccountMenu customerInfo={customerInfo} onSignedOut={() => setCustomerInfo(null)} />
+          ) : (
+            <MotionLink
+              {...buttonMotion}
+              href="/login"
+              className="hidden items-center gap-2 rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white md:flex"
+            >
+              <IconUser className="h-4 w-4 shrink-0" />
+              <span>Login</span>
+            </MotionLink>
+          )}
+          <MotionLink
             {...buttonMotion}
-            href="#"
-            className="hidden items-center gap-2 rounded-md border border-white/40 px-4 py-2.5 text-sm font-medium text-white md:flex"
-          >
-            <IconUser className="h-4 w-4" />
-            {header.account}
-          </motion.a>
-          <motion.a
-            {...buttonMotion}
-            href="#"
+            href="/wishlist"
             className="flex items-center gap-2 rounded-md bg-white px-3 py-2.5 text-sm font-medium text-dark-green sm:px-4"
           >
             <span className="relative">
               <IconHeart className="h-4 w-4" />
-              <CountBadge count={header.wishlistCount} />
+              <CountBadge count={mounted ? wishlistCount : 0} />
             </span>
             <span className="hidden sm:inline">{header.wishlist}</span>
-          </motion.a>
-          <motion.a
+          </MotionLink>
+          <MotionLink
             {...buttonMotion}
-            href="#"
+            href="/cart"
             className="flex items-center gap-2 rounded-md bg-white px-3 py-2.5 text-sm font-medium text-dark-green sm:px-4"
           >
             <span className="relative">
               <IconCart className="h-4 w-4" />
-              <CountBadge count={header.cartCount} />
+              <CountBadge count={mounted ? cartCount : 0} />
             </span>
             <span className="hidden sm:inline">{header.cart}</span>
-          </motion.a>
+          </MotionLink>
         </div>
       </div>
 
@@ -141,7 +193,7 @@ export default function SiteHeader() {
                 const isActive = link.href !== "#" && pathname === link.href;
                 return (
                   <li key={link.label}>
-                    <a
+                    <Link
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
                       className={`block py-2.5 text-sm font-medium transition-colors hover:text-white ${
@@ -149,7 +201,7 @@ export default function SiteHeader() {
                       }`}
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 );
               })}

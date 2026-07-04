@@ -33,3 +33,58 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Site-wide micro-interaction: every button/link gets a quick, subtle press
+   feedback. Framer-motion-driven buttons set their own inline transform
+   during animation, which always wins over this stylesheet rule, so the two
+   never fight — this just covers the many plain buttons/links that don't
+   use framer-motion. Kept fast (150ms) and small (4% scale) on purpose —
+   this is a grocery checkout flow, not a place to make people wait. */
+button:not(:disabled),
+a {
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
+}
+button:not(:disabled):active,
+a:active {
+  transform: scale(0.96);
+}
+
+/* Dual-thumb price range slider (components/shop/PriceRangeSlider.tsx) —
+   two overlaid <input type="range"> tracks are made transparent/click-through
+   so only their thumbs are interactive. */
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.range-thumb::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  background: transparent;
+}
+.range-thumb::-moz-range-track {
+  background: transparent;
+}
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--color-brand-green);
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.range-thumb::-moz-range-thumb {
+  -moz-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--color-brand-green);
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}

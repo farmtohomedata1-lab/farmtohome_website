@@ -73,11 +73,8 @@ export interface HeaderContent {
   categoriesLabel: string;
   searchPlaceholder: string;
   searchButton: string;
-  account: string;
   wishlist: string;
-  wishlistCount: number;
   cart: string;
-  cartCount: number;
 }
 
 export interface NavBarContent {
@@ -206,7 +203,7 @@ export const topBar: TopBarContent = {
   links: [
     { label: "Track Order", href: "#" },
     { label: "About Us", href: "/about" },
-    { label: "Contact", href: "#" },
+    { label: "Contact", href: "/contact" },
     { label: "FAQ", href: "#" },
   ],
 };
@@ -217,22 +214,16 @@ export const header: HeaderContent = {
   categoriesLabel: "Categories",
   searchPlaceholder: "Search for products, categories",
   searchButton: "Search",
-  account: "Account",
   wishlist: "Wishlist",
-  wishlistCount: 3,
   cart: "My Cart",
-  cartCount: 2,
 };
 
 export const navBar: NavBarContent = {
   links: [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Shop", href: "#" },
-    { label: "Vendors", href: "#" },
-    { label: "Pages", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Contact", href: "#" },
+    { label: "Shop", href: "/shop" },
+    { label: "Contact", href: "/contact" },
   ],
   delivery: "Delivery: 258 FKD Street, Berlin",
 };
@@ -473,7 +464,7 @@ export const footer: FooterContent = {
     {
       title: "Shop Categories",
       links: [
-        { label: "Contact Us", href: "#" },
+        { label: "Contact Us", href: "/contact" },
         { label: "Information", href: "#" },
         { label: "About Us", href: "#" },
         { label: "Careers", href: "#" },

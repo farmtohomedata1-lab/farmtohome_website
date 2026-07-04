@@ -33,8 +33,10 @@ export interface FeaturedProduct {
   id: string;
   name: string;
   pack: string | null;
-  price: string;
-  oldPrice: string | null;
+  price: number;
+  compareAtPrice: number | null;
+  isOnSale: boolean;
+  inStock: boolean;
   rating: number;
   image: string | null;
 }
@@ -55,8 +57,10 @@ export async function getFeaturedProducts(tag: string): Promise<FeaturedProduct[
       id: product.id,
       name: product.name,
       pack: product.pack,
-      price: product.price,
-      oldPrice: product.oldPrice,
+      price: product.price.toNumber(),
+      compareAtPrice: product.compareAtPrice ? product.compareAtPrice.toNumber() : null,
+      isOnSale: product.isOnSale,
+      inStock: product.inStock,
       rating: product.rating,
       image: product.image,
     }));

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Category } from "@/content/homepage";
 import { fadeUp, stagger, viewportOnce } from "./motion";
@@ -10,6 +11,14 @@ export default function CategoryStrip({ categories }: { categories: Category[] }
 
   return (
     <section className="mx-auto w-full max-w-[1320px] px-4 pt-8 sm:px-6">
+      <div className="mb-4 flex items-center justify-end">
+        <Link
+          href="/shop"
+          className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
+        >
+          Shop All Products
+        </Link>
+      </div>
       <motion.ul
         initial="hidden"
         whileInView="visible"

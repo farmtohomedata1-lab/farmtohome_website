@@ -24,22 +24,172 @@ model PageSection {
   @@index([page])
 }
 
+// Product category, managed from /admin/categories. Independent of the
+// decorative `category_strip` CMS section on the homepage.
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
+// Product brand, managed from /admin/brands.
+model Brand {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
 // Storefront products. featuredTags drives which homepage list sections
 // (weekly_best_seller, deals_of_the_day, recently_added, top_selling,
 // top_rated) a product appears in — a product can carry multiple tags.
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  pack         String?
-  price        String
-  oldPrice     String?
-  rating       Int      @default(5)
-  image        String?
-  featuredTags String[] @default([])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String    @id @default(cuid())
+  name           String
+  pack           String?
+  price          Decimal   @db.Decimal(10, 2)
+  compareAtPrice Decimal?  @db.Decimal(10, 2)
+  // Admin toggle, independent of the compareAtPrice value — turning this off
+  // does not clear compareAtPrice so it can be re-enabled without retyping.
+  discountActive Boolean   @default(false)
+  // Derived: discountActive && compareAtPrice > price. Recomputed on every
+  // write in the product admin actions (see lib/pricing.ts) rather than
+  // computed per-query, since Prisma's `where` filter can't compare two
+  // columns on the same row — this keeps the "On Sale" filter and the
+  // product card badge guaranteed to agree.
+  isOnSale       Boolean   @default(false)
+  inStock        Boolean   @default(true)
+  rating         Int       @default(5)
+  image          String?
+  // Optional long-form copy shown in a "Product Details" section on the
+  // product detail page — the section simply doesn't render when this is
+  // null, no placeholder box.
+  detailedDescription String?
+  featuredTags   String[]  @default([])
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  brandId        String?
+  brand          Brand?    @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  orderItems     OrderItem[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([featuredTags], type: Gin)
+  @@index([categoryId])
+  @@index([brandId])
+}
+
+// Singleton — exactly one row ever exists (seeded once, see prisma/seed.ts).
+// Admin only ever updates this one row's values, never creates/deletes more.
+model SiteSettings {
+  id                    String  @id @default(cuid())
+  freeShippingThreshold Decimal @default(80) @db.Decimal(10, 2)
+  standardDeliveryFee   Decimal @default(5) @db.Decimal(10, 2)
+  paynowQrImageUrl      String? // admin-uploaded static PayNow QR code image
+}
+
+// Coupon codes for seasonal offers. `code` is normalized to uppercase on
+// every write (see admin/coupons/actions.ts) so lookups can use a plain
+// case-sensitive unique-indexed equality match while still behaving
+// case-insensitively end-to-end — Postgres's unique index on `code` is
+// case-sensitive by default, so without normalization "SAVE10" and
+// "save10" could otherwise both exist as distinct rows.
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discountType  String // "PERCENTAGE" | "FIXED"
+  discountValue Decimal   @db.Decimal(10, 2)
+  active        Boolean   @default(true)
+  startDate     DateTime? // null = no start restriction
+  endDate       DateTime? // null = no end restriction
+  createdAt     DateTime  @default(now())
+}
+
+// A logged-in shopper. Created the moment a Supabase user logs in (or signs
+// up) for the first time (see app/login/actions.ts) — there is no separate
+// signup form anywhere; that upsert-by-supabaseUserId *is* the signup.
+model Customer {
+  id             String     @id @default(cuid())
+  supabaseUserId String     @unique
+  email          String     @unique
+  name           String?
+  createdAt      DateTime   @default(now())
+  addresses      Address[]
+  orders         Order[]
+}
+
+// A customer's saved delivery address. Every query against this table must
+// be scoped to the requesting customer's id server-side (see
+// lib/auth/customerSession.ts) — there is no DB-level RLS enforcing this
+// (Prisma connects as the Postgres table-owner role, which bypasses RLS
+// regardless of policy; RLS is still enabled with no policies below as
+// defense-in-depth, matching the project's existing convention).
+model Address {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label       String? // "Home", "Office" — optional nickname
+  fullName    String
+  phone       String
+  blockStreet String // e.g. "Blk 258, Farrer Road"
+  unitNumber  String? // e.g. "#12-34"
+  postalCode  String
+  landmark    String?
+  isDefault   Boolean  @default(false)
+
+  @@index([customerId])
+}
+
+// One customer order. Shipping details and email are snapshotted as plain
+// fields (not just a mutable Address/Customer reference) so a later address
+// edit or deletion can never silently rewrite historical order data.
+model Order {
+  id                   String      @id @default(cuid())
+  customerId           String
+  customer             Customer    @relation(fields: [customerId], references: [id])
+  email                String // snapshot of customer's email at order time
+  shippingFullName     String
+  shippingPhone        String
+  shippingBlockStreet  String
+  shippingUnitNumber   String?
+  shippingPostalCode   String
+  landmark             String?
+  deliveryDate         DateTime?
+  orderNotes           String?
+  paymentMethod        String // "COD" | "PAYNOW_MANUAL"
+  // Kept completely separate from delivery/fulfillment concerns — an order
+  // can be paid-but-not-delivered or delivered-but-payment-still-pending,
+  // and these must never collapse into a single status field.
+  paymentStatus        String      @default("PENDING") // "PENDING" | "PAID" | "FAILED"
+  paymentReference     String? // empty until a real payment gateway exists
+  // Customer clicked "I've paid" for manual PayNow — intent, NOT
+  // verification. Only an admin's explicit "Mark as Paid" action (see
+  // app/admin/(protected)/orders/actions.ts) ever sets paymentStatus: PAID.
+  customerDeclaredPaid Boolean     @default(false)
+  subtotal             Decimal     @db.Decimal(10, 2)
+  discountAmount       Decimal     @default(0) @db.Decimal(10, 2)
+  shippingFee          Decimal     @db.Decimal(10, 2)
+  total                Decimal     @db.Decimal(10, 2)
+  couponCode           String?
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([customerId])
+}
+
+// Line item snapshot — name/price captured at order time so a later product
+// rename, price change, or deletion never rewrites historical order data.
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String
+  price     Decimal  @db.Decimal(10, 2)
+  quantity  Int
+
+  @@index([orderId])
 }
 
 // Server-side login lockout tracking. Keyed by email, not in-memory, since

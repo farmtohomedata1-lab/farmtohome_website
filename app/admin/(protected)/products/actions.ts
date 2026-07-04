@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
+import { computeIsOnSale } from "@/lib/pricing";
 
-// A product's tags decide which homepage sections it shows up in, so any
-// change here can affect the live homepage — revalidate it too.
+// A product's tags decide which homepage sections it shows up in, and its
+// price/category/brand/stock fields drive /shop's filters — revalidate both.
 function revalidateStorefront() {
   revalidatePath("/");
+  revalidatePath("/shop");
 }
 
 export async function toggleProductTag(
@@ -41,29 +43,42 @@ export async function toggleProductTag(
 export interface ProductFormValues {
   name: string;
   pack: string;
-  price: string;
-  oldPrice: string;
+  price: number;
+  compareAtPrice: number | null;
+  discountActive: boolean;
+  inStock: boolean;
   rating: number;
   image: string;
+  categoryId: string; // "" = none
+  brandId: string; // "" = none
+  detailedDescription: string; // "" = none (renders no section on the PDP)
 }
 
 export async function createProduct(values: ProductFormValues): Promise<{ error?: string }> {
   await requireAuthedUser();
 
-  if (!values.name.trim() || !values.price.trim()) {
-    return { error: "Name and price are required." };
+  if (!values.name.trim() || !(values.price > 0)) {
+    return { error: "Name and a price greater than 0 are required." };
   }
+
+  const isOnSale = computeIsOnSale(values);
 
   try {
     await prisma.product.create({
       data: {
         name: values.name.trim(),
         pack: values.pack.trim() || null,
-        price: values.price.trim(),
-        oldPrice: values.oldPrice.trim() || null,
+        price: values.price,
+        compareAtPrice: values.compareAtPrice,
+        discountActive: values.discountActive,
+        isOnSale,
+        inStock: values.inStock,
         rating: values.rating,
         image: values.image.trim() || null,
+        detailedDescription: values.detailedDescription.trim() || null,
         featuredTags: [],
+        categoryId: values.categoryId || null,
+        brandId: values.brandId || null,
       },
     });
   } catch (err) {
@@ -81,9 +96,11 @@ export async function updateProduct(
 ): Promise<{ error?: string }> {
   await requireAuthedUser();
 
-  if (!values.name.trim() || !values.price.trim()) {
-    return { error: "Name and price are required." };
+  if (!values.name.trim() || !(values.price > 0)) {
+    return { error: "Name and a price greater than 0 are required." };
   }
+
+  const isOnSale = computeIsOnSale(values);
 
   try {
     await prisma.product.update({
@@ -91,10 +108,16 @@ export async function updateProduct(
       data: {
         name: values.name.trim(),
         pack: values.pack.trim() || null,
-        price: values.price.trim(),
-        oldPrice: values.oldPrice.trim() || null,
+        price: values.price,
+        compareAtPrice: values.compareAtPrice,
+        discountActive: values.discountActive,
+        isOnSale,
+        inStock: values.inStock,
         rating: values.rating,
         image: values.image.trim() || null,
+        detailedDescription: values.detailedDescription.trim() || null,
+        categoryId: values.categoryId || null,
+        brandId: values.brandId || null,
       },
     });
   } catch (err) {

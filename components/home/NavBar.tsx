@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { navBar } from "@/content/homepage";
@@ -22,7 +23,7 @@ export default function NavBar() {
             const isActive = link.href !== "#" && pathname === link.href;
             return (
               <li key={link.label}>
-                <a
+                <Link
                   href={link.href}
                   className={`block px-4 py-3.5 text-sm font-semibold transition-colors first:pl-0 hover:text-dark-green ${
                     isActive
@@ -31,7 +32,7 @@ export default function NavBar() {
                   }`}
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             );
           })}
