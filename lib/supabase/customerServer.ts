@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { SECURE_COOKIE_OPTIONS } from "./cookieOptions";
 
 // Customer-facing Supabase client — deliberately separate from
 // lib/supabase/server.ts (admin). Supabase Auth stores its session under one
@@ -16,7 +17,7 @@ export async function createCustomerClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: { name: CUSTOMER_COOKIE_NAME },
+      cookieOptions: { ...SECURE_COOKIE_OPTIONS, name: CUSTOMER_COOKIE_NAME },
       cookies: {
         getAll() {
           return cookieStore.getAll();

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -19,7 +18,9 @@ import type {
   TestimonialsContent,
   WhyChooseContent,
 } from "@/content/about";
+import { footer } from "@/content/homepage";
 import type { Feature } from "@/content/homepage";
+import type { FooterContactContent } from "@/components/home/Footer";
 
 export const metadata: Metadata = {
   title: "About Us | Farm To Home",
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const [hero, statsBar, destination, team, whyChooseUs, testimonials, featureBand] =
+  const [hero, statsBar, destination, team, whyChooseUs, testimonials, featureBand, footerContact] =
     await Promise.all([
       getSectionContent<AboutHeroContent>("about", "hero"),
       getSectionContent<{ stats: StatItem[] }>("about", "stats_bar"),
@@ -37,18 +38,19 @@ export default async function AboutPage() {
       getSectionContent<WhyChooseContent>("about", "why_choose_us"),
       getSectionContent<TestimonialsContent>("about", "testimonials"),
       getSectionContent<{ features: Feature[] }>("about", "feature_band"),
+      getSectionContent<FooterContactContent>("home", "footer_contact"),
     ]);
+  const whatsappNumber = footerContact?.content.whatsappNumber ?? footer.help.whatsappNumber;
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
         {hero && <AboutHero content={hero.content} />}
         {statsBar && <StatsBar stats={statsBar.content.stats} />}
         {destination && <DestinationSection content={destination.content} />}
-        {team && <TeamSection content={team.content} />}
+        {team && <TeamSection content={team.content} whatsappNumber={whatsappNumber} />}
         {whyChooseUs && <WhyChooseUs content={whyChooseUs.content} />}
         {testimonials && <Testimonials content={testimonials.content} />}
         {featureBand && <FeatureBand features={featureBand.content.features} />}

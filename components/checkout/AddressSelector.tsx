@@ -22,6 +22,7 @@ export interface NewAddressValues {
   unitNumber: string;
   postalCode: string;
   landmark: string;
+  country: string;
 }
 
 export type NewAddressFieldErrors = Partial<Record<keyof NewAddressValues, string>>;
@@ -44,6 +45,37 @@ function AddressField({
   return (
     <div>
       <TextInput label={label} value={value} onChange={onChange} />
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+// Only "Singapore" is offered — this business ships within Singapore only —
+// but the field is still a real required selection (starts on a
+// non-selectable placeholder) rather than a value silently defaulted behind
+// the scenes, so a submission always reflects an explicit choice.
+function CountrySelectField({
+  value,
+  onChange,
+  error,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-gray-700">Country</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-dark-green focus:outline-none focus:ring-1 focus:ring-dark-green"
+      >
+        <option value="" disabled hidden>
+          Select Country
+        </option>
+        <option value="Singapore">Singapore</option>
+      </select>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
@@ -167,6 +199,11 @@ export default function AddressSelector({
               value={newAddress.postalCode}
               onChange={(v) => update("postalCode", v)}
               error={fieldErrors?.postalCode}
+            />
+            <CountrySelectField
+              value={newAddress.country}
+              onChange={(v) => update("country", v)}
+              error={fieldErrors?.country}
             />
             <AddressField
               label="Landmark (optional)"

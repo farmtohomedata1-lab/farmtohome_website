@@ -13,6 +13,7 @@ import AddressSelector, {
 } from "./AddressSelector";
 import PaymentMethodSelector, { type PaymentMethod } from "./PaymentMethodSelector";
 import CheckoutSummary from "./CheckoutSummary";
+import StripeCheckoutStep from "./StripeCheckoutStep";
 import { placeOrder } from "@/app/checkout/actions";
 
 const blankNewAddress: NewAddressValues = {
@@ -22,6 +23,7 @@ const blankNewAddress: NewAddressValues = {
   unitNumber: "",
   postalCode: "",
   landmark: "",
+  country: "",
 };
 
 // Client-side check mirroring the server action's own validation — catches
@@ -36,6 +38,7 @@ function validateNewAddress(values: NewAddressValues): NewAddressFieldErrors {
   if (!values.postalCode.trim()) errors.postalCode = "Postal code is required.";
   else if (!/^\d{6}$/.test(values.postalCode.trim()))
     errors.postalCode = "Enter a valid 6-digit postal code.";
+  if (!values.country.trim()) errors.country = "Please select a country.";
   return errors;
 }
 
@@ -43,10 +46,12 @@ export default function CheckoutClient({
   addresses,
   freeShippingThreshold,
   standardDeliveryFee,
+  couponsEnabled,
 }: {
   addresses: CheckoutAddress[];
   freeShippingThreshold: number;
   standardDeliveryFee: number;
+  couponsEnabled: boolean;
 }) {
   const router = useRouter();
   const items = useCartStore((state) => state.items);
@@ -60,12 +65,21 @@ export default function CheckoutClient({
   const [addressErrors, setAddressErrors] = useState<NewAddressFieldErrors>({});
   const [deliveryDate, setDeliveryDate] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("PAYNOW_MANUAL");
   const [appliedCoupon, setAppliedCoupon] = useState<(CouponRate & { code: string }) | null>(
     null
   );
   const [isPlacing, startTransition] = useTransition();
   const [placeError, setPlaceError] = useState<string | null>(null);
+  // Set only when a STRIPE order was just created and needs its Payment
+  // Element mounted right here on this same page (never a redirect for this
+  // step) — PayNow orders never touch this state, they redirect immediately
+  // to /order-confirmation exactly as before.
+  const [stripeCheckout, setStripeCheckout] = useState<{
+    orderId: string;
+    clientSecret: string;
+    total: number;
+  } | null>(null);
 
   const totals = computeCartTotals(
     items,
@@ -102,6 +116,7 @@ export default function CheckoutClient({
                 unitNumber: newAddress.unitNumber,
                 postalCode: newAddress.postalCode,
                 landmark: newAddress.landmark,
+                country: newAddress.country,
               },
         deliveryDate: deliveryDate || null,
         orderNotes,
@@ -113,9 +128,41 @@ export default function CheckoutClient({
         return;
       }
 
+      if (result.stripeClientSecret) {
+        // Capture the total BEFORE clearing the cart — clearCart() empties
+        // the store `totals` is derived from, which would otherwise show
+        // $0.00 on the payment step that's about to render.
+        const orderTotal = totals.total;
+        // Order is created (paymentStatus: PENDING) but not yet paid — stay
+        // on this page and mount the Payment Element. Cart clears now since
+        // the order itself already exists regardless of payment outcome; a
+        // failed/abandoned payment is retried against this same order, not
+        // by re-adding items to a cart.
+        clearCart();
+        setStripeCheckout({
+          orderId: result.orderId,
+          clientSecret: result.stripeClientSecret,
+          total: orderTotal,
+        });
+        return;
+      }
+
       clearCart();
       router.push(`/order-confirmation/${result.orderId}`);
     });
+  }
+
+  if (stripeCheckout) {
+    return (
+      <div className="mx-auto w-full max-w-lg px-4 py-8 sm:px-6">
+        <h1 className="mb-4 text-center text-lg font-bold text-dark-green">Complete Your Payment</h1>
+        <StripeCheckoutStep
+          orderId={stripeCheckout.orderId}
+          clientSecret={stripeCheckout.clientSecret}
+          total={stripeCheckout.total}
+        />
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -192,12 +239,14 @@ export default function CheckoutClient({
         </div>
 
         <div className="mt-8 w-full shrink-0 space-y-4 lg:mt-0 lg:w-80">
-          <CouponForm
-            items={items}
-            appliedCode={appliedCoupon?.code ?? null}
-            onApplied={(code, rate) => setAppliedCoupon({ ...rate, code })}
-            onCleared={() => setAppliedCoupon(null)}
-          />
+          {couponsEnabled && (
+            <CouponForm
+              items={items}
+              appliedCode={appliedCoupon?.code ?? null}
+              onApplied={(code, rate) => setAppliedCoupon({ ...rate, code })}
+              onCleared={() => setAppliedCoupon(null)}
+            />
+          )}
           <CheckoutSummary
             totals={totals}
             appliedCode={appliedCoupon?.code ?? null}

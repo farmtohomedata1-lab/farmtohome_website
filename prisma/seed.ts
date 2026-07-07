@@ -53,44 +53,30 @@ const homeSections: SeedSection[] = [
   },
   {
     page: "home",
-    sectionKey: "promo_banners",
-    label: "Promo Banners",
-    sortOrder: 3,
-    content: { banners: home.promoBanners },
-  },
-  {
-    page: "home",
     sectionKey: "weekly_best_seller",
     label: "Weekly Best Seller Grocery",
-    sortOrder: 4,
+    sortOrder: 3,
     content: { heading: home.weeklyBestSeller.heading },
-  },
-  {
-    page: "home",
-    sectionKey: "feature_band",
-    label: "Feature Band",
-    sortOrder: 5,
-    content: { features: home.features },
   },
   {
     page: "home",
     sectionKey: "deals_of_the_day",
     label: "Deals Of The Day",
-    sortOrder: 6,
+    sortOrder: 4,
     content: { heading: home.dealsOfTheDay.heading },
   },
   {
     page: "home",
     sectionKey: "weekend_banner",
     label: "Weekend Discount Banner",
-    sortOrder: 7,
+    sortOrder: 5,
     content: { ...home.weekendBanner },
   },
   {
     page: "home",
     sectionKey: "recently_added",
     label: "Recently Added",
-    sortOrder: 8,
+    sortOrder: 6,
     content: {
       heading: home.collections.sections[0].title,
       seeMoreLabel: home.collections.seeMore,
@@ -100,7 +86,7 @@ const homeSections: SeedSection[] = [
     page: "home",
     sectionKey: "top_selling",
     label: "Top Selling",
-    sortOrder: 9,
+    sortOrder: 7,
     content: {
       heading: home.collections.sections[1].title,
       seeMoreLabel: home.collections.seeMore,
@@ -110,7 +96,7 @@ const homeSections: SeedSection[] = [
     page: "home",
     sectionKey: "top_rated",
     label: "Top Rated",
-    sortOrder: 10,
+    sortOrder: 8,
     content: {
       heading: home.collections.sections[2].title,
       seeMoreLabel: home.collections.seeMore,
@@ -118,10 +104,27 @@ const homeSections: SeedSection[] = [
   },
   {
     page: "home",
-    sectionKey: "blog_insights",
-    label: "Latest Blog Post Insights",
+    sectionKey: "feature_band",
+    label: "Feature Band",
+    sortOrder: 9,
+    content: { features: home.features },
+  },
+  {
+    page: "home",
+    sectionKey: "gallery",
+    label: "Gallery",
+    sortOrder: 10,
+    content: { heading: home.gallery.heading, images: home.gallery.images },
+  },
+  {
+    page: "home",
+    sectionKey: "footer_contact",
+    label: "Footer Contact Info (Hours & WhatsApp)",
     sortOrder: 11,
-    content: { heading: home.blog.heading, readMore: home.blog.readMore, posts: home.blog.posts },
+    content: {
+      hours: home.footer.help.hours,
+      whatsappNumber: home.footer.help.whatsappNumber,
+    },
   },
 ];
 
@@ -163,7 +166,6 @@ const aboutSections: SeedSection[] = [
     content: {
       heading: about.team.heading,
       subtext: about.team.subtext,
-      contactPhone: about.team.contactPhone,
       members: about.team.members,
     },
   },

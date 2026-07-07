@@ -19,8 +19,8 @@ export default async function LoginPage({
       <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-sm">
         <h1 className="text-lg font-bold text-dark-green">Log In</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Enter your email and password. First time here? Just enter what you&apos;d like to
-          use — this creates your account too, no separate signup needed.
+          Enter your email and password. First time here? We&apos;ll let you know right
+          here if you need to create an account — no separate signup page.
         </p>
 
         {reset && (

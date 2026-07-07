@@ -54,7 +54,6 @@ export interface TeamSectionContent {
   show: boolean;
   heading: string;
   subtext: string;
-  contactPhone: string;
   members: TeamMember[];
 }
 
@@ -95,7 +94,7 @@ export const aboutHero: AboutHeroContent = {
   description:
     "We're a neighborhood grocery store bringing fresh, organic produce and everyday pantry essentials straight to your door across Singapore. Here's a bit about who we are and why we do this.",
   cta: "Contact Us",
-  ctaHref: "#",
+  ctaHref: "/contact",
 };
 
 export const stats: StatItem[] = [
@@ -126,7 +125,6 @@ export const team: TeamSectionContent = {
   heading: "Meet Our Expert Team",
   subtext:
     "The people behind your weekly grocery run — sourcing, packing, and delivering with care.",
-  contactPhone: "+25896 3158 3228",
   members: [
     {
       id: "team-owner",
@@ -223,10 +221,10 @@ export const featureStrip: Feature[] = [
     description: "We prepared special discounts you on grocery products.",
   },
   {
-    id: "about-feature-returns",
-    icon: "returns",
-    title: "Easy Returns",
-    description: "Not happy with an item? We'll sort it out, no hassle.",
+    id: "about-feature-whatsapp",
+    icon: "whatsapp",
+    title: "WhatsApp Support Available",
+    description: "Message us on WhatsApp anytime for quick help with your order.",
   },
   {
     id: "about-feature-support",

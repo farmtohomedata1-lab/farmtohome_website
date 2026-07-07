@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/format";
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  COD: "Cash on Delivery",
-  PAYNOW_MANUAL: "PayNow",
-};
+import { formatDateSGT, formatPrice } from "@/lib/format";
+import { PAYMENT_METHOD_LABELS } from "@/lib/orderPaymentLabels";
 
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
@@ -72,21 +68,9 @@ export default async function AdminOrdersPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-700">
-                  {order.deliveryDate
-                    ? order.deliveryDate.toLocaleDateString("en-SG", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "—"}
+                  {order.deliveryDate ? formatDateSGT(order.deliveryDate, "short") : "—"}
                 </td>
-                <td className="px-4 py-3 text-gray-500">
-                  {order.createdAt.toLocaleDateString("en-SG", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </td>
+                <td className="px-4 py-3 text-gray-500">{formatDateSGT(order.createdAt, "short")}</td>
               </tr>
             ))}
           </tbody>

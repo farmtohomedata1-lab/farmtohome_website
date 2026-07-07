@@ -20,7 +20,15 @@ export default function WeeklyBestSeller({
   return (
     <section className="mt-10 bg-gray-section py-10">
       <div className="mx-auto w-full max-w-[1320px] px-4 sm:px-6">
-        {heading && <SectionHeading title={heading} withDot />}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {heading && <SectionHeading title={heading} withDot />}
+          <Link
+            href="/shop"
+            className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
+          >
+            Shop All Products
+          </Link>
+        </div>
         <motion.ul
           initial="hidden"
           whileInView="visible"
@@ -42,7 +50,6 @@ export default function WeeklyBestSeller({
                     alt={product.name || ""}
                     width={96}
                     height={96}
-                    unoptimized
                     className="h-24 w-24"
                   />
                 )}

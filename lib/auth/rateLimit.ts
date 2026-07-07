@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { sendLockoutAlertEmail } from "@/lib/email/securityAlertEmail";
 
 // DB-backed (not in-memory) because Vercel serverless functions don't share
 // process memory across invocations — an in-memory counter would silently
@@ -39,6 +40,12 @@ export async function recordFailedLogin(email: string): Promise<void> {
   try {
     const existing = await prisma.loginAttempt.findUnique({ where: { email } });
     const failedCount = (existing?.failedCount ?? 0) + 1;
+    // True only on the exact attempt that crosses the threshold — an
+    // already-locked row (this key failing again mid-lockout) never reaches
+    // here anyway, since checkLoginAllowed blocks the attempt before the
+    // caller ever gets to record a new failure. This is what keeps the alert
+    // to one email per lockout instead of one per blocked retry.
+    const justLockedOut = !existing?.lockedUntil && failedCount >= MAX_ATTEMPTS;
     const lockedUntil =
       failedCount >= MAX_ATTEMPTS
         ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000)
@@ -49,6 +56,10 @@ export async function recordFailedLogin(email: string): Promise<void> {
       create: { email, failedCount, lockedUntil },
       update: { failedCount, lockedUntil },
     });
+
+    if (justLockedOut) {
+      await sendLockoutAlertEmail(email, failedCount);
+    }
   } catch (err) {
     console.error(`[auth] recordFailedLogin(${email}) failed:`, err);
   }

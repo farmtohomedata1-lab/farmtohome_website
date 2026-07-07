@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PriceRangeSlider from "./PriceRangeSlider";
+
+const VISIBLE_COUNT = 5;
 
 export interface NamedOption {
   id: string;
@@ -85,14 +88,11 @@ export default function ShopSidebar({
 
         {categories.length > 0 && (
           <FilterSection title="Product Categories">
-            {categories.map((category) => (
-              <CheckboxRow
-                key={category.id}
-                label={category.name}
-                checked={selectedCategoryIds.includes(category.id)}
-                onChange={(checked) => toggleMulti("category", category.id, checked)}
-              />
-            ))}
+            <ExpandableCheckboxList
+              items={categories}
+              selectedIds={selectedCategoryIds}
+              onToggle={(id, checked) => toggleMulti("category", id, checked)}
+            />
           </FilterSection>
         )}
 
@@ -111,14 +111,11 @@ export default function ShopSidebar({
 
         {brands.length > 0 && (
           <FilterSection title="Brands">
-            {brands.map((brand) => (
-              <CheckboxRow
-                key={brand.id}
-                label={brand.name}
-                checked={selectedBrandIds.includes(brand.id)}
-                onChange={(checked) => toggleMulti("brand", brand.id, checked)}
-              />
-            ))}
+            <ExpandableCheckboxList
+              items={brands}
+              selectedIds={selectedBrandIds}
+              onToggle={(id, checked) => toggleMulti("brand", id, checked)}
+            />
           </FilterSection>
         )}
       </div>
@@ -134,6 +131,42 @@ function FilterSection({ title, children }: { title: string; children: ReactNode
       </h3>
       <div className="space-y-2.5">{children}</div>
     </div>
+  );
+}
+
+function ExpandableCheckboxList({
+  items,
+  selectedIds,
+  onToggle,
+}: {
+  items: NamedOption[];
+  selectedIds: string[];
+  onToggle: (id: string, checked: boolean) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleItems = expanded ? items : items.slice(0, VISIBLE_COUNT);
+  const hiddenCount = items.length - VISIBLE_COUNT;
+
+  return (
+    <>
+      {visibleItems.map((item) => (
+        <CheckboxRow
+          key={item.id}
+          label={item.name}
+          checked={selectedIds.includes(item.id)}
+          onChange={(checked) => onToggle(item.id, checked)}
+        />
+      ))}
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="pt-1 text-xs font-semibold text-brand-green hover:underline"
+        >
+          {expanded ? "See less" : `See more (${hiddenCount})`}
+        </button>
+      )}
+    </>
   );
 }
 

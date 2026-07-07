@@ -12,9 +12,11 @@ import CartSummary from "./CartSummary";
 export default function CartClient({
   freeShippingThreshold,
   standardDeliveryFee,
+  couponsEnabled,
 }: {
   freeShippingThreshold: number;
   standardDeliveryFee: number;
+  couponsEnabled: boolean;
 }) {
   const items = useCartStore((state) => state.items);
   const setQuantity = useCartStore((state) => state.setQuantity);
@@ -95,12 +97,14 @@ export default function CartClient({
         </div>
 
         <div className="mt-8 w-full shrink-0 lg:mt-0 lg:w-80">
-          <CouponForm
-            items={items}
-            appliedCode={appliedCoupon?.code ?? null}
-            onApplied={(code, rate) => setAppliedCoupon({ ...rate, code })}
-            onCleared={() => setAppliedCoupon(null)}
-          />
+          {couponsEnabled && (
+            <CouponForm
+              items={items}
+              appliedCode={appliedCoupon?.code ?? null}
+              onApplied={(code, rate) => setAppliedCoupon({ ...rate, code })}
+              onCleared={() => setAppliedCoupon(null)}
+            />
+          )}
           <CartSummary totals={totals} appliedCode={appliedCoupon?.code ?? null} />
         </div>
       </div>

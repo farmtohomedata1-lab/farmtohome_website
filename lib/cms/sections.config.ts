@@ -64,6 +64,7 @@ const featureIconOptions: SelectOption[] = [
   { value: "returns", label: "Returns / Refresh" },
   { value: "support", label: "Support / Chat" },
   { value: "deals", label: "Deals / Percent" },
+  { value: "whatsapp", label: "WhatsApp" },
 ];
 
 const whyChooseIconOptions: SelectOption[] = [
@@ -123,46 +124,17 @@ export const sections: SectionDef[] = [
   },
   {
     page: "home",
-    sectionKey: "promo_banners",
-    label: "Promo Banners",
-    sortOrder: 3,
-    fields: [
-      {
-        key: "banners",
-        label: "Banners",
-        type: "objectList",
-        itemLabel: "Banner",
-        itemFields: [
-          { key: "headingLine1", label: "Heading Line 1", type: "text" },
-          { key: "headingLine2", label: "Heading Line 2", type: "text" },
-          { key: "priceLabel", label: "Price Label", type: "text" },
-          { key: "price", label: "Price", type: "text" },
-          { key: "image", label: "Image", type: "image" },
-          { key: "imageAlt", label: "Image Alt Text", type: "text" },
-        ],
-      },
-    ],
-  },
-  {
-    page: "home",
     sectionKey: "weekly_best_seller",
     label: "Weekly Best Seller Grocery",
-    sortOrder: 4,
+    sortOrder: 3,
     productTag: "weekly_best_seller",
     fields: [{ key: "heading", label: "Section Heading", type: "text" }],
   },
   {
     page: "home",
-    sectionKey: "feature_band",
-    label: "Feature Band",
-    sortOrder: 5,
-    fields: [featureListField],
-  },
-  {
-    page: "home",
     sectionKey: "deals_of_the_day",
     label: "Deals Of The Day",
-    sortOrder: 6,
+    sortOrder: 4,
     productTag: "deals_of_the_day",
     fields: [{ key: "heading", label: "Section Heading", type: "text" }],
   },
@@ -170,7 +142,7 @@ export const sections: SectionDef[] = [
     page: "home",
     sectionKey: "weekend_banner",
     label: "Weekend Discount Banner",
-    sortOrder: 7,
+    sortOrder: 5,
     fields: [
       { key: "label", label: "Label", type: "text" },
       { key: "heading", label: "Heading", type: "text" },
@@ -183,7 +155,7 @@ export const sections: SectionDef[] = [
     page: "home",
     sectionKey: "recently_added",
     label: "Recently Added",
-    sortOrder: 8,
+    sortOrder: 6,
     productTag: "recently_added",
     fields: [
       { key: "heading", label: "Section Heading", type: "text" },
@@ -194,7 +166,7 @@ export const sections: SectionDef[] = [
     page: "home",
     sectionKey: "top_selling",
     label: "Top Selling",
-    sortOrder: 9,
+    sortOrder: 7,
     productTag: "top_selling",
     fields: [
       { key: "heading", label: "Section Heading", type: "text" },
@@ -205,7 +177,7 @@ export const sections: SectionDef[] = [
     page: "home",
     sectionKey: "top_rated",
     label: "Top Rated",
-    sortOrder: 10,
+    sortOrder: 8,
     productTag: "top_rated",
     fields: [
       { key: "heading", label: "Section Heading", type: "text" },
@@ -214,25 +186,38 @@ export const sections: SectionDef[] = [
   },
   {
     page: "home",
-    sectionKey: "blog_insights",
-    label: "Latest Blog Post Insights",
-    sortOrder: 11,
+    sectionKey: "feature_band",
+    label: "Feature Band",
+    sortOrder: 9,
+    fields: [featureListField],
+  },
+  {
+    page: "home",
+    sectionKey: "gallery",
+    label: "Gallery",
+    sortOrder: 10,
     fields: [
       { key: "heading", label: "Section Heading", type: "text" },
-      { key: "readMore", label: "“Read More” Label", type: "text" },
       {
-        key: "posts",
-        label: "Blog Posts",
+        key: "images",
+        label: "Gallery Images",
         type: "objectList",
-        itemLabel: "Post",
+        itemLabel: "Image",
         itemFields: [
           { key: "image", label: "Image", type: "image" },
           { key: "imageAlt", label: "Image Alt Text", type: "text" },
-          { key: "date", label: "Date", type: "text" },
-          { key: "category", label: "Category Tag", type: "text" },
-          { key: "title", label: "Title", type: "text" },
         ],
       },
+    ],
+  },
+  {
+    page: "home",
+    sectionKey: "footer_contact",
+    label: "Footer Contact Info (Hours & WhatsApp)",
+    sortOrder: 11,
+    fields: [
+      { key: "hours", label: "Hours", type: "text" },
+      { key: "whatsappNumber", label: "WhatsApp Number (e.g. +65-8185-0452)", type: "text" },
     ],
   },
 
@@ -290,7 +275,6 @@ export const sections: SectionDef[] = [
     fields: [
       { key: "heading", label: "Heading", type: "text" },
       { key: "subtext", label: "Subtext", type: "textarea" },
-      { key: "contactPhone", label: "Contact Phone (shown on every card)", type: "text" },
       {
         key: "members",
         label: "Team Members",

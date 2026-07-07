@@ -52,7 +52,7 @@ export default function Hero({ content }: { content: HeroContent }) {
             {content.cta && (
               <motion.a
                 {...buttonMotion}
-                href="#"
+                href="/shop"
                 className="flex items-center gap-2 rounded-md bg-brand-green px-6 py-3 text-sm font-semibold text-white"
               >
                 {content.cta}
@@ -86,7 +86,6 @@ export default function Hero({ content }: { content: HeroContent }) {
               width={640}
               height={440}
               priority
-              unoptimized
               className="h-auto w-full max-w-xl"
             />
           </motion.div>

@@ -136,14 +136,6 @@ export function IconPlus(props: IconProps) {
   );
 }
 
-export function IconPhone(props: IconProps) {
-  return (
-    <StrokeIcon {...props}>
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-    </StrokeIcon>
-  );
-}
-
 export function IconChat(props: IconProps) {
   return (
     <StrokeIcon {...props}>
@@ -251,37 +243,18 @@ export function IconShieldCheck(props: IconProps) {
   );
 }
 
+export function IconWhatsApp(props: IconProps) {
+  return (
+    <svg className={props.className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.6 6.32A7.85 7.85 0 0 0 12.05 4a7.94 7.94 0 0 0-6.9 11.9L4 20l4.2-1.1a7.9 7.9 0 0 0 3.85 1h0a7.94 7.94 0 0 0 5.55-13.58zM12.05 18.53h0a6.6 6.6 0 0 1-3.36-.92l-.24-.14-2.5.66.67-2.43-.16-.25a6.6 6.6 0 0 1 10.2-8.3 6.55 6.55 0 0 1 1.94 4.67 6.6 6.6 0 0 1-6.55 6.6zm3.6-4.94c-.2-.1-1.17-.58-1.35-.64-.18-.07-.31-.1-.44.1-.13.2-.5.63-.62.76-.11.13-.23.14-.42.05-.2-.1-.83-.3-1.58-.97a5.9 5.9 0 0 1-1.1-1.36c-.11-.2 0-.3.09-.4.09-.1.2-.24.3-.36.1-.12.13-.2.2-.33.06-.13.03-.25-.02-.35-.05-.1-.44-1.06-.6-1.45-.16-.38-.32-.33-.44-.34h-.38c-.13 0-.34.05-.52.25-.18.2-.68.67-.68 1.62s.7 1.88.8 2.01c.1.13 1.38 2.1 3.34 2.95.47.2.83.32 1.12.41.47.15.9.13 1.24.08.38-.06 1.17-.48 1.33-.94.17-.46.17-.86.12-.94-.05-.09-.18-.14-.38-.24z" />
+    </svg>
+  );
+}
+
 function IconFacebook(props: IconProps) {
   return (
     <StrokeIcon {...props}>
       <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-    </StrokeIcon>
-  );
-}
-
-function IconTwitter(props: IconProps) {
-  return (
-    <StrokeIcon {...props}>
-      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
-    </StrokeIcon>
-  );
-}
-
-function IconLinkedin(props: IconProps) {
-  return (
-    <StrokeIcon {...props}>
-      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V9h4v1a6 6 0 0 1 2-2z" />
-      <rect x="2" y="9" width="4" height="12" />
-      <circle cx="4" cy="4" r="2" />
-    </StrokeIcon>
-  );
-}
-
-function IconYoutube(props: IconProps) {
-  return (
-    <StrokeIcon {...props}>
-      <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z" />
-      <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" />
     </StrokeIcon>
   );
 }
@@ -305,6 +278,7 @@ export const featureIcons: Record<FeatureIconName, ComponentType<IconProps>> = {
   returns: IconRefreshCcw,
   support: IconChat,
   deals: IconPercent,
+  whatsapp: IconWhatsApp,
 };
 
 export const whyChooseIcons: Record<WhyChooseIconName, ComponentType<IconProps>> = {
@@ -315,8 +289,5 @@ export const whyChooseIcons: Record<WhyChooseIconName, ComponentType<IconProps>>
 
 export const socialIcons: Record<SocialIconName, ComponentType<IconProps>> = {
   facebook: IconFacebook,
-  twitter: IconTwitter,
-  linkedin: IconLinkedin,
-  youtube: IconYoutube,
   instagram: IconInstagram,
 };

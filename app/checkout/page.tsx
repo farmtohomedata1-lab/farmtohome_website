@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -12,7 +11,7 @@ export const metadata: Metadata = {
   title: "Checkout | Farm To Home",
 };
 
-const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5 };
+const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5, couponsEnabled: true };
 
 export default async function CheckoutPage() {
   // Every visitor here is guaranteed logged in — proxy.ts already redirects
@@ -32,10 +31,10 @@ export default async function CheckoutPage() {
     settings?.freeShippingThreshold.toNumber() ?? DEFAULT_SITE_SETTINGS.freeShippingThreshold;
   const standardDeliveryFee =
     settings?.standardDeliveryFee.toNumber() ?? DEFAULT_SITE_SETTINGS.standardDeliveryFee;
+  const couponsEnabled = settings?.couponsEnabled ?? DEFAULT_SITE_SETTINGS.couponsEnabled;
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
@@ -54,6 +53,7 @@ export default async function CheckoutPage() {
           }))}
           freeShippingThreshold={freeShippingThreshold}
           standardDeliveryFee={standardDeliveryFee}
+          couponsEnabled={couponsEnabled}
         />
       </main>
       <Footer />

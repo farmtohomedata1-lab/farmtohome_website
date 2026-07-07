@@ -1,13 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { formatDateSGT, formatDateTimeSGT } from "@/lib/format";
 import OrderSummaryView from "@/components/orders/OrderSummaryView";
 import MarkPaidButton from "./MarkPaidButton";
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  COD: "Cash on Delivery",
-  PAYNOW_MANUAL: "PayNow",
-};
+import CheckStripeStatusButton from "./CheckStripeStatusButton";
+import { PAYMENT_METHOD_LABELS } from "@/lib/orderPaymentLabels";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -45,12 +43,7 @@ export default async function AdminOrderDetailPage({
         </span>
       </div>
       <p className="mt-1 text-sm text-gray-500">
-        Placed by {order.customer.email} on{" "}
-        {order.createdAt.toLocaleDateString("en-SG", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
+        Placed by {order.customer.email} on {formatDateTimeSGT(order.createdAt)}
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -104,16 +97,18 @@ export default async function AdminOrderDetailPage({
                 {order.customerDeclaredPaid ? "Yes" : "No"}
               </dd>
             </div>
+            {order.stripePaymentIntentId && (
+              <div className="flex justify-between gap-3">
+                <dt className="shrink-0">Stripe PaymentIntent</dt>
+                <dd className="truncate font-mono text-xs text-gray-900" title={order.stripePaymentIntentId}>
+                  {order.stripePaymentIntentId}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt>Delivery date</dt>
               <dd className="font-medium text-gray-900">
-                {order.deliveryDate
-                  ? order.deliveryDate.toLocaleDateString("en-SG", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "Not specified"}
+                {order.deliveryDate ? formatDateSGT(order.deliveryDate, "short") : "Not specified"}
               </dd>
             </div>
             <div className="flex justify-between">
@@ -122,9 +117,21 @@ export default async function AdminOrderDetailPage({
             </div>
           </dl>
 
-          {order.paymentStatus !== "PAID" && (
+          {/* Stripe orders confirm themselves via webhook — a manual override
+              here would just race with (or contradict) that automatic
+              status. Still shown for PayNow and any legacy COD orders. */}
+          {order.paymentMethod !== "STRIPE" && order.paymentStatus !== "PAID" && (
             <div className="mt-4 border-t border-gray-100 pt-4">
               <MarkPaidButton orderId={order.id} />
+            </div>
+          )}
+
+          {/* Recovery path for a missed/delayed webhook — asks Stripe
+              directly for this PaymentIntent's real status rather than
+              waiting indefinitely for a webhook that may never arrive. */}
+          {order.paymentMethod === "STRIPE" && order.paymentStatus === "PENDING" && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <CheckStripeStatusButton orderId={order.id} />
             </div>
           )}
         </div>

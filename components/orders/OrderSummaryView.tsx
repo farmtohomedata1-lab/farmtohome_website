@@ -1,4 +1,5 @@
-import { formatPrice } from "@/lib/format";
+import { formatDateSGT, formatDateTimeSGT, formatPrice } from "@/lib/format";
+import { PAYMENT_METHOD_LABELS } from "@/lib/orderPaymentLabels";
 
 export interface OrderSummaryItem {
   id: string;
@@ -26,11 +27,6 @@ export interface OrderSummaryData {
   shippingPostalCode: string;
   landmark: string | null;
 }
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  COD: "Cash on Delivery",
-  PAYNOW_MANUAL: "PayNow",
-};
 
 // Read-only order summary — shared by the customer-facing order confirmation
 // page and the admin order detail page, so the two never drift apart.
@@ -69,6 +65,7 @@ export default function OrderSummaryView({ order }: { order: OrderSummaryData })
             Delivery Details
           </h3>
           <dl className="mt-3 space-y-1 text-sm text-gray-600">
+            <p>Order Placed: {formatDateTimeSGT(order.createdAt)}</p>
             <p>{order.shippingFullName}</p>
             <p>{order.shippingPhone}</p>
             <p>
@@ -79,13 +76,7 @@ export default function OrderSummaryView({ order }: { order: OrderSummaryData })
             {order.landmark && <p>Landmark: {order.landmark}</p>}
             <p>
               Delivery Date:{" "}
-              {order.deliveryDate
-                ? new Date(order.deliveryDate).toLocaleDateString("en-SG", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : "Not specified"}
+              {order.deliveryDate ? formatDateSGT(order.deliveryDate, "long") : "Not specified"}
             </p>
             {order.orderNotes && <p>Notes: {order.orderNotes}</p>}
           </dl>
@@ -108,7 +99,7 @@ export default function OrderSummaryView({ order }: { order: OrderSummaryData })
                 <dt className="text-gray-500">
                   Discount{order.couponCode ? ` (${order.couponCode})` : ""}
                 </dt>
-                <dd className="font-medium text-sale-red">-{formatPrice(order.discountAmount)}</dd>
+                <dd className="font-medium text-brand-green">-{formatPrice(order.discountAmount)}</dd>
               </div>
             )}
             <div className="flex justify-between border-t border-gray-100 pt-2">

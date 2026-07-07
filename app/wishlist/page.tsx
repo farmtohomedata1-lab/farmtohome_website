@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -27,7 +26,6 @@ export default async function WishlistPage() {
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>

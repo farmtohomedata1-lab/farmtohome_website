@@ -12,6 +12,7 @@ export interface AddressFormValues {
   unitNumber: string;
   postalCode: string;
   landmark: string;
+  country: string;
   isDefault: boolean;
 }
 
@@ -20,6 +21,10 @@ function validateAddress(values: AddressFormValues): string | null {
   if (!values.phone.trim()) return "Phone number is required.";
   if (!values.blockStreet.trim()) return "Address is required.";
   if (!/^\d{6}$/.test(values.postalCode.trim())) return "Enter a valid 6-digit postal code.";
+  // Only one real option exists ("Singapore") but the selection is never
+  // silently assumed — same never-trust-the-client principle as every other
+  // required field here, in case a client bypasses the dropdown UI.
+  if (values.country.trim() !== "Singapore") return "Please select a country.";
   return null;
 }
 

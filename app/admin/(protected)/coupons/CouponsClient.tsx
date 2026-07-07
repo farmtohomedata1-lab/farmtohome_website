@@ -5,7 +5,13 @@ import TextInput from "@/components/admin/TextInput";
 import NumberInput from "@/components/admin/NumberInput";
 import ToggleField from "@/components/admin/ToggleField";
 import { formatPrice } from "@/lib/format";
-import { createCoupon, deleteCoupon, updateCoupon, type CouponFormValues } from "./actions";
+import {
+  createCoupon,
+  deleteCoupon,
+  setCouponsEnabled,
+  updateCoupon,
+  type CouponFormValues,
+} from "./actions";
 
 export interface AdminCoupon {
   id: string;
@@ -33,15 +39,48 @@ function formatDiscount(coupon: Pick<AdminCoupon, "discountType" | "discountValu
 }
 
 export default function CouponsClient({
+  settingsId,
+  initialCouponsEnabled,
   initialCoupons,
 }: {
+  settingsId: string;
+  initialCouponsEnabled: boolean;
   initialCoupons: AdminCoupon[];
 }) {
   const [coupons, setCoupons] = useState(initialCoupons);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [couponsEnabled, setCouponsEnabledState] = useState(initialCouponsEnabled);
+  const [isTogglePending, startToggleTransition] = useTransition();
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
+  function handleToggleCoupons(next: boolean) {
+    setCouponsEnabledState(next);
+    setToggleError(null);
+    startToggleTransition(async () => {
+      const result = await setCouponsEnabled(settingsId, next);
+      if (result.error) {
+        setCouponsEnabledState(!next);
+        setToggleError(result.error);
+      }
+    });
+  }
 
   return (
     <div className="mt-6">
+      <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+        <ToggleField
+          label="Coupons Enabled"
+          checked={couponsEnabled}
+          onChange={handleToggleCoupons}
+        />
+        <p className="mt-1.5 text-xs text-gray-500">
+          When off, the coupon code field is completely hidden on Cart and Checkout — not just
+          disabled.
+        </p>
+        {isTogglePending && <p className="mt-1.5 text-xs text-gray-400">Saving...</p>}
+        {toggleError && <p className="mt-1.5 text-xs text-red-600">{toggleError}</p>}
+      </div>
+
       <button
         type="button"
         onClick={() => setShowAddForm((v) => !v)}

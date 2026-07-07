@@ -14,7 +14,6 @@ export default function AboutHero({ content }: { content: AboutHeroContent }) {
           alt={content.imageAlt || ""}
           fill
           priority
-          unoptimized
           className="-z-10 object-cover object-center"
         />
       )}

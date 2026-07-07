@@ -22,7 +22,6 @@ export default function DestinationSection({ content }: { content: DestinationCo
               alt={content.imageAlt || ""}
               width={600}
               height={520}
-              unoptimized
               className="h-auto w-full rounded-lg object-cover"
             />
           </motion.div>

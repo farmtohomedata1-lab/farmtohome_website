@@ -1,23 +1,23 @@
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Hero from "@/components/home/Hero";
 import CategoryStrip from "@/components/home/CategoryStrip";
-import PromoBanners from "@/components/home/PromoBanners";
 import WeeklyBestSeller from "@/components/home/WeeklyBestSeller";
 import FeatureBand from "@/components/home/FeatureBand";
 import DealsOfTheDay from "@/components/home/DealsOfTheDay";
 import WeekendBanner from "@/components/home/WeekendBanner";
 import CollectionGrid, { type CollectionPanel } from "@/components/home/CollectionGrid";
-import BlogSection from "@/components/home/BlogSection";
+import MapSection from "@/components/home/MapSection";
+import Gallery from "@/components/home/Gallery";
+import ScrollToHash from "@/components/home/ScrollToHash";
 import Footer from "@/components/home/Footer";
 import { getFeaturedProducts, getSectionContent } from "@/lib/cms/getSectionContent";
+import { map } from "@/content/homepage";
 import type {
-  BlogContent,
   Category,
   Feature,
+  GalleryContent,
   HeroContent,
-  PromoBanner,
   WeekendBannerContent,
 } from "@/content/homepage";
 
@@ -34,10 +34,8 @@ export default async function Home() {
   const [
     hero,
     categoryStrip,
-    promoBanners,
     weeklyBestSeller,
     weeklyBestSellerProducts,
-    featureBand,
     dealsOfTheDay,
     dealsOfTheDayProducts,
     weekendBanner,
@@ -47,14 +45,13 @@ export default async function Home() {
     topSellingProducts,
     topRated,
     topRatedProducts,
-    blogInsights,
+    featureBand,
+    gallery,
   ] = await Promise.all([
     getSectionContent<HeroContent>("home", "hero"),
     getSectionContent<{ categories: Category[] }>("home", "category_strip"),
-    getSectionContent<{ banners: PromoBanner[] }>("home", "promo_banners"),
     getSectionContent<HeadingContent>("home", "weekly_best_seller"),
     getFeaturedProducts("weekly_best_seller"),
-    getSectionContent<{ features: Feature[] }>("home", "feature_band"),
     getSectionContent<HeadingContent>("home", "deals_of_the_day"),
     getFeaturedProducts("deals_of_the_day"),
     getSectionContent<WeekendBannerContent>("home", "weekend_banner"),
@@ -64,7 +61,8 @@ export default async function Home() {
     getFeaturedProducts("top_selling"),
     getSectionContent<CollectionSectionContent>("home", "top_rated"),
     getFeaturedProducts("top_rated"),
-    getSectionContent<BlogContent>("home", "blog_insights"),
+    getSectionContent<{ features: Feature[] }>("home", "feature_band"),
+    getSectionContent<GalleryContent>("home", "gallery"),
   ]);
 
   const collectionPanels: CollectionPanel[] = [
@@ -90,20 +88,17 @@ export default async function Home() {
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
         {hero && <Hero content={hero.content} />}
         {categoryStrip && <CategoryStrip categories={categoryStrip.content.categories} />}
-        {promoBanners && <PromoBanners banners={promoBanners.content.banners} />}
         {weeklyBestSeller && (
           <WeeklyBestSeller
             heading={weeklyBestSeller.content.heading}
             products={weeklyBestSellerProducts}
           />
         )}
-        {featureBand && <FeatureBand features={featureBand.content.features} />}
         {dealsOfTheDay && (
           <DealsOfTheDay
             heading={dealsOfTheDay.content.heading}
@@ -112,8 +107,11 @@ export default async function Home() {
         )}
         {weekendBanner && <WeekendBanner content={weekendBanner.content} />}
         <CollectionGrid panels={collectionPanels} />
-        {blogInsights && <BlogSection content={blogInsights.content} />}
+        {featureBand && <FeatureBand features={featureBand.content.features} />}
+        <MapSection content={map} />
+        {gallery && <Gallery content={gallery.content} />}
       </main>
+      <ScrollToHash />
       <Footer />
     </>
   );

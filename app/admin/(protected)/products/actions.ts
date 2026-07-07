@@ -1,9 +1,11 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
 import { computeIsOnSale } from "@/lib/pricing";
+import { logAdminAction } from "@/lib/audit/log";
 
 // A product's tags decide which homepage sections it shows up in, and its
 // price/category/brand/stock fields drive /shop's filters — revalidate both.
@@ -17,7 +19,7 @@ export async function toggleProductTag(
   tag: string,
   checked: boolean
 ): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
   try {
     const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -33,9 +35,16 @@ export async function toggleProductTag(
     });
   } catch (err) {
     console.error(`[products] toggleProductTag(${productId}, ${tag}) failed:`, err);
+    Sentry.captureException(err);
     return { error: "Failed to update. Please try again." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "product.tag_toggled",
+    targetType: "Product",
+    targetId: productId,
+    metadata: { tag, checked },
+  });
   revalidateStorefront();
   return {};
 }
@@ -55,7 +64,7 @@ export interface ProductFormValues {
 }
 
 export async function createProduct(values: ProductFormValues): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
   if (!values.name.trim() || !(values.price > 0)) {
     return { error: "Name and a price greater than 0 are required." };
@@ -63,8 +72,9 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
 
   const isOnSale = computeIsOnSale(values);
 
+  let product;
   try {
-    await prisma.product.create({
+    product = await prisma.product.create({
       data: {
         name: values.name.trim(),
         pack: values.pack.trim() || null,
@@ -83,9 +93,16 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
     });
   } catch (err) {
     console.error("[products] createProduct failed:", err);
+    Sentry.captureException(err);
     return { error: "Failed to create product. Please try again." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "product.created",
+    targetType: "Product",
+    targetId: product.id,
+    metadata: { name: product.name, price: values.price },
+  });
   revalidateStorefront();
   return {};
 }
@@ -94,7 +111,7 @@ export async function updateProduct(
   productId: string,
   values: ProductFormValues
 ): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
   if (!values.name.trim() || !(values.price > 0)) {
     return { error: "Name and a price greater than 0 are required." };
@@ -122,23 +139,38 @@ export async function updateProduct(
     });
   } catch (err) {
     console.error(`[products] updateProduct(${productId}) failed:`, err);
+    Sentry.captureException(err);
     return { error: "Failed to save product. Please try again." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "product.updated",
+    targetType: "Product",
+    targetId: productId,
+    metadata: { name: values.name.trim(), price: values.price },
+  });
   revalidateStorefront();
   return {};
 }
 
 export async function deleteProduct(productId: string): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
+  let deleted;
   try {
-    await prisma.product.delete({ where: { id: productId } });
+    deleted = await prisma.product.delete({ where: { id: productId } });
   } catch (err) {
     console.error(`[products] deleteProduct(${productId}) failed:`, err);
+    Sentry.captureException(err);
     return { error: "Failed to delete product. Please try again." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "product.deleted",
+    targetType: "Product",
+    targetId: productId,
+    metadata: { name: deleted.name },
+  });
   revalidateStorefront();
   return {};
 }

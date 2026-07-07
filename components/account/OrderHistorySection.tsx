@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatPrice } from "@/lib/format";
+import { formatDateSGT, formatPrice } from "@/lib/format";
+import { PAYMENT_METHOD_LABELS } from "@/lib/orderPaymentLabels";
 
 export interface AccountOrderSummary {
   id: string;
@@ -9,11 +10,6 @@ export interface AccountOrderSummary {
   paymentStatus: string;
   itemCount: number;
 }
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  COD: "Cash on Delivery",
-  PAYNOW_MANUAL: "PayNow",
-};
 
 export default function OrderHistorySection({ orders }: { orders: AccountOrderSummary[] }) {
   return (
@@ -35,12 +31,8 @@ export default function OrderHistorySection({ orders }: { orders: AccountOrderSu
                   Order #{order.id.slice(-8).toUpperCase()}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {new Date(order.createdAt).toLocaleDateString("en-SG", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}{" "}
-                  · {order.itemCount} item{order.itemCount === 1 ? "" : "s"} ·{" "}
+                  {formatDateSGT(order.createdAt, "short")} · {order.itemCount} item
+                  {order.itemCount === 1 ? "" : "s"} ·{" "}
                   {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
                 </p>
               </div>

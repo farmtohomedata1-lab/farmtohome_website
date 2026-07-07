@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { productCardLabels } from "@/content/homepage";
-import { formatPrice } from "@/lib/format";
 import { computeDiscountPercent } from "@/lib/pricing";
 import { useWishlistStore } from "@/lib/wishlistStore";
 import { cardLift, fadeUp } from "./motion";
 import { IconHeart, IconStar } from "./icons";
 import CartQuantityControl from "@/components/product/CartQuantityControl";
+import PriceDisplay from "@/components/product/PriceDisplay";
 
 export interface ProductCardProduct {
   id: string;
@@ -90,7 +90,6 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
             alt={product.name || ""}
             width={120}
             height={120}
-            unoptimized
             className="h-28 w-28"
           />
         )}
@@ -105,12 +104,7 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
       )}
       {product.pack && <p className="mt-1 text-xs text-gray-400">{product.pack}</p>}
       <p className="mt-2 flex items-baseline gap-2">
-        <span className="text-base font-bold text-sale-red">{formatPrice(product.price)}</span>
-        {product.compareAtPrice != null && (
-          <span className="text-xs text-gray-400 line-through">
-            {formatPrice(product.compareAtPrice)}
-          </span>
-        )}
+        <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} />
       </p>
       <div className="mt-3">
         <CartQuantityControl

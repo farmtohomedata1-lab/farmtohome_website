@@ -50,7 +50,6 @@ export default function ImageUploadField({
             alt=""
             width={64}
             height={64}
-            unoptimized
             className="h-16 w-16 shrink-0 rounded object-cover"
           />
         ) : (
@@ -64,7 +63,7 @@ export default function ImageUploadField({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           className="hidden"
           onChange={(e) => handleFile(e.target.files?.[0])}
         />

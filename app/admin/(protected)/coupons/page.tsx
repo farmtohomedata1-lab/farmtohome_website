@@ -7,7 +7,11 @@ function toDateInputValue(date: Date | null): string {
 }
 
 export default async function CouponsPage() {
-  const coupons = await prisma.coupon.findMany({ orderBy: { createdAt: "desc" } });
+  const [coupons, existingSettings] = await Promise.all([
+    prisma.coupon.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.siteSettings.findFirst(),
+  ]);
+  const settings = existingSettings ?? (await prisma.siteSettings.create({ data: {} }));
 
   return (
     <div>
@@ -18,6 +22,8 @@ export default async function CouponsPage() {
       </p>
 
       <CouponsClient
+        settingsId={settings.id}
+        initialCouponsEnabled={settings.couponsEnabled}
         initialCoupons={coupons.map((c) => ({
           id: c.id,
           code: c.code,

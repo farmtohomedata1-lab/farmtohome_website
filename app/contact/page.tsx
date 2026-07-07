@@ -1,22 +1,26 @@
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import PageHero from "@/components/common/PageHero";
 import ContactForm from "@/components/contact/ContactForm";
 import { footer } from "@/content/homepage";
-import { IconPhone, IconPin } from "@/components/home/icons";
+import { IconClock, IconPin, IconWhatsApp } from "@/components/home/icons";
+import { getSectionContent } from "@/lib/cms/getSectionContent";
+import type { FooterContactContent } from "@/components/home/Footer";
 
 export const metadata: Metadata = {
   title: "Contact Us | Farm To Home",
   description: "Get in touch with Farm To Home — questions, feedback, or order help.",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const footerContact = await getSectionContent<FooterContactContent>("home", "footer_contact");
+  const hours = footerContact?.content.hours ?? footer.help.hours;
+  const whatsappNumber = footerContact?.content.whatsappNumber ?? footer.help.whatsappNumber;
+
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
@@ -35,14 +39,20 @@ export default function ContactPage() {
                 <span className="text-gray-500">{footer.help.address}</span>
               </li>
               <li className="flex items-start gap-3">
-                <IconPhone className="mt-0.5 h-5 w-5 shrink-0 text-brand-green" />
+                <IconClock className="mt-0.5 h-5 w-5 shrink-0 text-brand-green" />
+                <span className="block text-gray-500">{hours}</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <IconWhatsApp className="mt-0.5 h-5 w-5 shrink-0 text-brand-green" />
                 <span>
-                  <span className="block text-gray-500">{footer.help.hours}</span>
+                  <span className="block font-semibold text-dark-green">WhatsApp Us</span>
                   <a
-                    href={`tel:${footer.help.phone.replace(/\s/g, "")}`}
-                    className="mt-1 block text-base font-bold text-brand-green"
+                    href={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block text-base font-bold text-brand-green hover:underline"
                   >
-                    {footer.help.phone}
+                    {whatsappNumber}
                   </a>
                 </span>
               </li>

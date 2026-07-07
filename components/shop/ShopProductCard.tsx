@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { formatPrice } from "@/lib/format";
 import { computeDiscountPercent } from "@/lib/pricing";
 import { useWishlistStore } from "@/lib/wishlistStore";
 import { IconHeart } from "@/components/home/icons";
 import CartQuantityControl from "@/components/product/CartQuantityControl";
+import PriceDisplay from "@/components/product/PriceDisplay";
 
 export interface ShopProduct {
   id: string;
@@ -31,7 +31,7 @@ export default function ShopProductCard({ product }: { product: ShopProduct }) {
   return (
     <article className="relative flex flex-col rounded-md border border-gray-200 bg-white p-4">
       {discountPercent != null && discountPercent > 0 && (
-        <span className="absolute left-3 top-3 z-10 rounded-sm bg-sale-red px-2 py-1 text-[10px] font-bold uppercase text-white">
+        <span className="absolute left-3 top-3 z-10 rounded-sm bg-brand-green px-2 py-1 text-[10px] font-bold uppercase text-white">
           {discountPercent}% Off
         </span>
       )}
@@ -65,7 +65,6 @@ export default function ShopProductCard({ product }: { product: ShopProduct }) {
             alt={product.name}
             width={120}
             height={120}
-            unoptimized
             className="h-28 w-28 object-contain"
           />
         )}
@@ -79,12 +78,7 @@ export default function ShopProductCard({ product }: { product: ShopProduct }) {
       {product.pack && <p className="mt-1 text-xs text-gray-400">{product.pack}</p>}
 
       <p className="mt-2 flex items-baseline gap-2">
-        <span className="text-base font-bold text-sale-red">{formatPrice(product.price)}</span>
-        {product.compareAtPrice != null && (
-          <span className="text-xs text-gray-400 line-through">
-            {formatPrice(product.compareAtPrice)}
-          </span>
-        )}
+        <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} />
       </p>
 
       <div className="mt-3">

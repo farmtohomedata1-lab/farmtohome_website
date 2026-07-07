@@ -4,11 +4,20 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import type { TeamSectionContent } from "@/content/about";
 import { cardLift, fadeUp, stagger, viewportOnce } from "@/components/home/motion";
-import { IconPhone } from "@/components/home/icons";
+import { IconWhatsApp } from "@/components/home/icons";
 
 type TeamContent = Omit<TeamSectionContent, "show">;
 
-export default function TeamSection({ content }: { content: TeamContent }) {
+// whatsappNumber is sourced from the shared "footer_contact" CMS section
+// (same field the footer/contact page use) — never a separate hardcoded
+// copy, so there is exactly one contact number anywhere on the site.
+export default function TeamSection({
+  content,
+  whatsappNumber,
+}: {
+  content: TeamContent;
+  whatsappNumber: string;
+}) {
   if (content.members.length === 0) return null;
 
   return (
@@ -46,7 +55,6 @@ export default function TeamSection({ content }: { content: TeamContent }) {
                 alt={member.imageAlt || ""}
                 width={400}
                 height={400}
-                unoptimized
                 className="h-40 w-40 rounded-lg object-cover sm:h-48 sm:w-48"
               />
             )}
@@ -54,11 +62,16 @@ export default function TeamSection({ content }: { content: TeamContent }) {
               <h3 className="mt-4 text-base font-bold text-dark-green">{member.name}</h3>
             )}
             {member.role && <p className="mt-1 text-sm text-gray-500">{member.role}</p>}
-            {content.contactPhone && (
-              <p className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-green">
-                <IconPhone className="h-4 w-4" />
-                {content.contactPhone}
-              </p>
+            {whatsappNumber && (
+              <a
+                href={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-green hover:underline"
+              >
+                <IconWhatsApp className="h-4 w-4" />
+                {whatsappNumber}
+              </a>
             )}
           </motion.li>
         ))}

@@ -1,24 +1,13 @@
 import "server-only";
 import { getResendClient } from "./resend";
 import { EMAIL_FROM_ADDRESS, SHOP_ALERT_EMAIL } from "./config";
+import { escapeHtml } from "./escapeHtml";
 
 export interface ContactSubmission {
   name: string;
   email: string;
   phone: string;
   message: string;
-}
-
-// Submitted text is attacker-controlled (unauthenticated, public form) and
-// gets interpolated into an HTML email opened in the shop owner's inbox —
-// escape it so a submission can't inject markup/links there.
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 export async function sendContactMessageEmail(

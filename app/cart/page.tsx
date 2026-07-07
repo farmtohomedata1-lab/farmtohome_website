@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
@@ -22,7 +21,7 @@ interface CartHeroContent {
 
 // Schema defaults — used only if the SiteSettings singleton row is somehow
 // missing, so this page never crashes waiting on it.
-const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5 };
+const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5, couponsEnabled: true };
 
 export default async function CartPage() {
   const [settings, hero, featureBand] = await Promise.all([
@@ -35,10 +34,10 @@ export default async function CartPage() {
     settings?.freeShippingThreshold.toNumber() ?? DEFAULT_SITE_SETTINGS.freeShippingThreshold;
   const standardDeliveryFee =
     settings?.standardDeliveryFee.toNumber() ?? DEFAULT_SITE_SETTINGS.standardDeliveryFee;
+  const couponsEnabled = settings?.couponsEnabled ?? DEFAULT_SITE_SETTINGS.couponsEnabled;
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
@@ -49,6 +48,7 @@ export default async function CartPage() {
         <CartClient
           freeShippingThreshold={freeShippingThreshold}
           standardDeliveryFee={standardDeliveryFee}
+          couponsEnabled={couponsEnabled}
         />
         {featureBand && <FeatureBand features={featureBand.content.features} />}
       </main>

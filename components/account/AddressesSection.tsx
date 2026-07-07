@@ -31,6 +31,7 @@ const blankForm: AddressFormValues = {
   unitNumber: "",
   postalCode: "",
   landmark: "",
+  country: "",
   isDefault: false,
 };
 
@@ -131,6 +132,10 @@ function AddressRow({
             unitNumber: address.unitNumber,
             postalCode: address.postalCode,
             landmark: address.landmark,
+            // Every saved address is already implicitly Singapore (the only
+            // option this business ships to) — pre-fill it here rather than
+            // forcing re-selection of data that's already known-good.
+            country: "Singapore",
             isDefault: address.isDefault,
           }}
           submitLabel="Save"
@@ -223,6 +228,7 @@ function AddressForm({
   const [values, setValues] = useState(initialValues);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [countryError, setCountryError] = useState<string | null>(null);
 
   function update<K extends keyof AddressFormValues>(key: K, value: AddressFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -230,6 +236,13 @@ function AddressForm({
 
   function handleSubmit() {
     setError(null);
+
+    if (!values.country.trim()) {
+      setCountryError("Please select a country.");
+      return;
+    }
+    setCountryError(null);
+
     startTransition(async () => {
       const result = await onSubmit(values);
       if (result.error) {
@@ -270,6 +283,20 @@ function AddressForm({
           value={values.postalCode}
           onChange={(v) => update("postalCode", v)}
         />
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Country</label>
+          <select
+            value={values.country}
+            onChange={(e) => update("country", e.target.value)}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-dark-green focus:outline-none focus:ring-1 focus:ring-dark-green"
+          >
+            <option value="" disabled hidden>
+              Select Country
+            </option>
+            <option value="Singapore">Singapore</option>
+          </select>
+          {countryError && <p className="mt-1 text-xs text-red-600">{countryError}</p>}
+        </div>
         <TextInput
           label="Landmark (optional)"
           value={values.landmark}

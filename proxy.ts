@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SECURE_COOKIE_OPTIONS } from "@/lib/supabase/cookieOptions";
 
 const LAST_ACTIVE_COOKIE = "admin_last_active";
 const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -17,6 +18,7 @@ async function handleAdminRoute(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: SECURE_COOKIE_OPTIONS,
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -85,7 +87,7 @@ async function handleCustomerRoute(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: { name: CUSTOMER_COOKIE_NAME },
+      cookieOptions: { ...SECURE_COOKIE_OPTIONS, name: CUSTOMER_COOKIE_NAME },
       cookies: {
         getAll() {
           return request.cookies.getAll();

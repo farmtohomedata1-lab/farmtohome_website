@@ -1,22 +1,26 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import CartQuantityControl from "@/components/product/CartQuantityControl";
+import PriceDisplay from "@/components/product/PriceDisplay";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/format";
 import { computeDiscountPercent } from "@/lib/pricing";
 
-async function getProduct(id: string) {
+// Wrapped in React's cache() so generateMetadata and the page body — which
+// both need this same product — share one DB round trip per request instead
+// of two; without this, every PDP view queried the database twice for
+// identical data.
+const getProduct = cache(async (id: string) => {
   return prisma.product.findUnique({
     where: { id },
     include: { category: true, brand: true },
   });
-}
+});
 
 export async function generateMetadata({
   params,
@@ -48,7 +52,6 @@ export default async function ProductDetailPage({
 
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
@@ -74,7 +77,6 @@ export default async function ProductDetailPage({
                 alt={product.name}
                 width={320}
                 height={320}
-                unoptimized
                 className="h-64 w-64 object-contain sm:h-80 sm:w-80"
               />
             ) : (
@@ -109,14 +111,9 @@ export default async function ProductDetailPage({
             {product.pack && <p className="mt-1 text-sm text-gray-400">{product.pack}</p>}
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="text-2xl font-bold text-sale-red">{formatPrice(price)}</span>
-              {compareAtPrice != null && (
-                <span className="text-base text-gray-400 line-through">
-                  {formatPrice(compareAtPrice)}
-                </span>
-              )}
+              <PriceDisplay price={price} compareAtPrice={compareAtPrice} size="lg" />
               {discountPercent != null && discountPercent > 0 && (
-                <span className="rounded-sm bg-sale-red px-2 py-1 text-xs font-bold uppercase text-white">
+                <span className="rounded-sm bg-brand-green px-2 py-1 text-xs font-bold uppercase text-white">
                   {discountPercent}% Off
                 </span>
               )}

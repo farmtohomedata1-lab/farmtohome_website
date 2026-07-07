@@ -221,7 +221,6 @@ function ProductRow({
           alt={product.name}
           width={56}
           height={56}
-          unoptimized
           className="h-14 w-14 shrink-0 rounded object-cover"
         />
       ) : (

@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import TopBar from "@/components/home/TopBar";
 import SiteHeader from "@/components/home/SiteHeader";
 import NavBar from "@/components/home/NavBar";
 import Footer from "@/components/home/Footer";
 import PageHero from "@/components/common/PageHero";
 import OrderSummaryView from "@/components/orders/OrderSummaryView";
 import PayNowPanel from "@/components/orders/PayNowPanel";
+import StripeConfirmationStatus from "@/components/orders/StripeConfirmationStatus";
 import SuccessCheckmark from "@/components/orders/SuccessCheckmark";
 import { requireAuthedCustomer } from "@/lib/auth/customerSession";
 import { prisma } from "@/lib/prisma";
@@ -40,21 +40,37 @@ export default async function OrderConfirmationPage({
   const settings =
     order.paymentMethod === "PAYNOW_MANUAL" ? await prisma.siteSettings.findFirst() : null;
 
+  // For a Stripe order, "placed" and "paid" are different things — the
+  // webhook is the only thing that ever confirms the latter, so the success
+  // banner only shows once paymentStatus is genuinely PAID. PayNow keeps
+  // showing it immediately, unchanged: placing a PayNow order always
+  // succeeds regardless of when (or whether) the customer actually pays.
+  const isUnconfirmedStripeOrder = order.paymentMethod === "STRIPE" && order.paymentStatus !== "PAID";
+
   return (
     <>
-      <TopBar />
       <SiteHeader />
       <NavBar />
       <main>
         <PageHero heading="Order Confirmation" breadcrumbLabel="Order Confirmation" />
         <div className="mx-auto w-full max-w-[1320px] px-4 py-8 sm:px-6">
-          <div className="mb-6 flex flex-col items-center gap-3 rounded-md bg-brand-green/10 px-4 py-6 text-center sm:flex-row sm:justify-center">
-            <SuccessCheckmark />
-            <p className="text-sm text-dark-green">
-              Thank you! Your order <strong>#{order.id.slice(-8).toUpperCase()}</strong> has been
-              placed.
-            </p>
-          </div>
+          {isUnconfirmedStripeOrder ? (
+            <div className="mb-6">
+              <StripeConfirmationStatus
+                orderId={order.id}
+                initialPaymentStatus={order.paymentStatus}
+                total={order.total.toNumber()}
+              />
+            </div>
+          ) : (
+            <div className="mb-6 flex flex-col items-center gap-3 rounded-md bg-brand-green/10 px-4 py-6 text-center sm:flex-row sm:justify-center">
+              <SuccessCheckmark />
+              <p className="text-sm text-dark-green">
+                Thank you! Your order <strong>#{order.id.slice(-8).toUpperCase()}</strong> has been
+                placed.
+              </p>
+            </div>
+          )}
 
           <div className="lg:flex lg:items-start lg:gap-8">
             <div className="min-w-0 flex-1">

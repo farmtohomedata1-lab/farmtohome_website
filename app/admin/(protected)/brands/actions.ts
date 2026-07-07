@@ -1,8 +1,10 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
+import { logAdminAction } from "@/lib/audit/log";
 
 // Brands drive the /shop sidebar filter — any change should reflect there
 // immediately, plus the admin product form's brand dropdown.
@@ -12,24 +14,32 @@ function revalidateStorefront() {
 }
 
 export async function createBrand(name: string): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
 
+  let brand;
   try {
-    await prisma.brand.create({ data: { name: trimmed } });
+    brand = await prisma.brand.create({ data: { name: trimmed } });
   } catch (err) {
     console.error("[brands] createBrand failed:", err);
+    Sentry.captureException(err);
     return { error: "Failed to create brand. It may already exist." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "brand.created",
+    targetType: "Brand",
+    targetId: brand.id,
+    metadata: { name: trimmed },
+  });
   revalidateStorefront();
   return {};
 }
 
 export async function updateBrand(brandId: string, name: string): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
   const trimmed = name.trim();
   if (!trimmed) return { error: "Name is required." };
@@ -38,23 +48,38 @@ export async function updateBrand(brandId: string, name: string): Promise<{ erro
     await prisma.brand.update({ where: { id: brandId }, data: { name: trimmed } });
   } catch (err) {
     console.error(`[brands] updateBrand(${brandId}) failed:`, err);
+    Sentry.captureException(err);
     return { error: "Failed to save brand. Name may already exist." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "brand.updated",
+    targetType: "Brand",
+    targetId: brandId,
+    metadata: { name: trimmed },
+  });
   revalidateStorefront();
   return {};
 }
 
 export async function deleteBrand(brandId: string): Promise<{ error?: string }> {
-  await requireAuthedUser();
+  const admin = await requireAuthedUser();
 
+  let deleted;
   try {
-    await prisma.brand.delete({ where: { id: brandId } });
+    deleted = await prisma.brand.delete({ where: { id: brandId } });
   } catch (err) {
     console.error(`[brands] deleteBrand(${brandId}) failed:`, err);
+    Sentry.captureException(err);
     return { error: "Failed to delete brand. Please try again." };
   }
 
+  await logAdminAction(admin.email ?? "unknown", {
+    action: "brand.deleted",
+    targetType: "Brand",
+    targetId: brandId,
+    metadata: { name: deleted.name },
+  });
   revalidateStorefront();
   return {};
 }

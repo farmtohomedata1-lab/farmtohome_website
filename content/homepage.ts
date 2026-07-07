@@ -48,28 +48,22 @@ export type FeatureIconName =
   | "price"
   | "returns"
   | "support"
-  | "deals";
+  | "deals"
+  | "whatsapp";
 
-export type SocialIconName =
-  | "facebook"
-  | "twitter"
-  | "linkedin"
-  | "youtube"
-  | "instagram";
+// Single source of truth for the real store address — used by both the
+// footer contact block and the homepage map embed so they can never drift.
+const STORE_ADDRESS =
+  "218 Pasir Panjang Rd, #01-09 ICON@Pasir Panjang, Singapore 118579";
+
+export type SocialIconName = "facebook" | "instagram";
 
 export interface NavLink {
   label: string;
   href: string;
 }
 
-export interface TopBarContent {
-  welcome: string;
-  links: NavLink[];
-}
-
 export interface HeaderContent {
-  logoPrefix: string;
-  logoSuffix: string;
   categoriesLabel: string;
   searchPlaceholder: string;
   searchButton: string;
@@ -98,16 +92,6 @@ export interface Category {
   name: string;
   items: string;
   image: string;
-}
-
-export interface PromoBanner {
-  id: string;
-  headingLine1: string;
-  headingLine2: string;
-  priceLabel: string;
-  price: string;
-  image: string;
-  imageAlt: string;
 }
 
 export interface SimpleProduct {
@@ -158,19 +142,20 @@ export interface CollectionsContent {
   sections: CollectionSection[];
 }
 
-export interface BlogPost {
+export interface GalleryImage {
   id: string;
   image: string;
   imageAlt: string;
-  date: string;
-  category: string;
-  title: string;
 }
 
-export interface BlogContent {
+export interface GalleryContent {
   heading: string;
-  readMore: string;
-  posts: BlogPost[];
+  images: GalleryImage[];
+}
+
+export interface MapContent {
+  heading: string;
+  address: string;
 }
 
 export interface FooterColumn {
@@ -179,8 +164,6 @@ export interface FooterColumn {
 }
 
 export interface FooterContent {
-  logoPrefix: string;
-  logoSuffix: string;
   tagline: string;
   emailPlaceholder: string;
   socials: { id: SocialIconName; href: string }[];
@@ -188,29 +171,13 @@ export interface FooterContent {
   help: {
     title: string;
     address: string;
-    hours: string;
-    phone: string;
-    chatTitle: string;
-    chatSubtitle: string;
+    hours: string; // seed default — live value served from the "footer_contact" CMS section
+    whatsappNumber: string; // seed default — live value served from the "footer_contact" CMS section; the ONE contact number on the site, never hardcode a duplicate elsewhere
   };
   copyright: string;
-  paymentLabel: string;
-  payments: string[];
 }
 
-export const topBar: TopBarContent = {
-  welcome: "Welcome to our Organic store EkoMart!",
-  links: [
-    { label: "Track Order", href: "#" },
-    { label: "About Us", href: "/about" },
-    { label: "Contact", href: "/contact" },
-    { label: "FAQ", href: "#" },
-  ],
-};
-
 export const header: HeaderContent = {
-  logoPrefix: "EKO",
-  logoSuffix: "MART",
   categoriesLabel: "Categories",
   searchPlaceholder: "Search for products, categories",
   searchButton: "Search",
@@ -224,8 +191,9 @@ export const navBar: NavBarContent = {
     { label: "About", href: "/about" },
     { label: "Shop", href: "/shop" },
     { label: "Contact", href: "/contact" },
+    { label: "Gallery", href: "/#gallery" },
   ],
-  delivery: "Delivery: 258 FKD Street, Berlin",
+  delivery: "Shipping within Singapore only",
 };
 
 export const hero: HeroContent = {
@@ -257,27 +225,6 @@ export const categories: Category[] = categoryImages.map((photoId, i) => ({
   items: "299 ITEMS",
   image: img(photoId, 120, 120),
 }));
-
-export const promoBanners: PromoBanner[] = [
-  {
-    id: "promo-1",
-    headingLine1: "Get Everyday Fresh",
-    headingLine2: "Organic Vegetable",
-    priceLabel: "Only",
-    price: "$15.00",
-    image: img(photo.onionsPile, 200, 160),
-    imageAlt: "Fresh onions",
-  },
-  {
-    id: "promo-2",
-    headingLine1: "Get Everyday Fresh",
-    headingLine2: "Organic Vegetable",
-    priceLabel: "Only",
-    price: "$15.00",
-    image: img(photo.candyBars, 200, 160),
-    imageAlt: "Grocery packs",
-  },
-];
 
 export const weeklyBestSeller: { heading: string; products: SimpleProduct[] } = {
   heading: "Weekly Best Seller Grocery",
@@ -407,80 +354,43 @@ export const collections: CollectionsContent = {
   ],
 };
 
-export const blog: BlogContent = {
-  heading: "Latest Blog Post Insights",
-  readMore: "Read Details",
-  posts: [
-    {
-      id: "blog-1",
-      image: img(photo.bibimbap, 600, 400),
-      imageAlt: "Colorful seasoned rice bowl with vegetables",
-      date: "15 Sep, 2023",
-      category: "Modern Fashion",
-      title: "Fashion Fixation: Fueling Your Passion for All Things Stylish",
-    },
-    {
-      id: "blog-2",
-      image: img(photo.saladBowl, 600, 400),
-      imageAlt: "Fresh vegetable salad bowl",
-      date: "15 Sep, 2023",
-      category: "Modern Fashion",
-      title: "Fashion Fixation: Fueling Your Passion for All Things Stylish",
-    },
-    {
-      id: "blog-3",
-      image: img(photo.potatoes, 600, 400),
-      imageAlt: "Freshly harvested potatoes",
-      date: "15 Sep, 2023",
-      category: "Modern Fashion",
-      title: "Fashion Fixation: Fueling Your Passion for All Things Stylish",
-    },
+export const gallery: GalleryContent = {
+  heading: "From Our Gallery",
+  images: [
+    { id: "gallery-1", image: img(photo.groceryShelfVeg, 1200, 480), imageAlt: "Fresh vegetables on our shop shelves" },
+    { id: "gallery-2", image: img(photo.vegSpreadDark, 1200, 480), imageAlt: "A spread of fresh, colorful vegetables" },
+    { id: "gallery-3", image: img(photo.fruitPlatter, 1200, 480), imageAlt: "Mixed fresh fruit platter" },
+    { id: "gallery-4", image: img(photo.breadLoaves, 1200, 480), imageAlt: "Rustic bread loaves" },
+    { id: "gallery-5", image: img(photo.saladBowl, 1200, 480), imageAlt: "Big fresh vegetable salad bowl" },
   ],
 };
 
 export const footer: FooterContent = {
-  logoPrefix: "EKO",
-  logoSuffix: "MART",
   tagline: "What's inside: New Arrivals, Exclusive Sales, News & Mores",
   emailPlaceholder: "Email Address",
   socials: [
     { id: "facebook", href: "#" },
-    { id: "twitter", href: "#" },
-    { id: "linkedin", href: "#" },
-    { id: "youtube", href: "#" },
     { id: "instagram", href: "#" },
   ],
   columns: [
     {
-      title: "Our Stores",
-      links: [
-        { label: "Delivery Information", href: "#" },
-        { label: "Privacy Policy", href: "#" },
-        { label: "Terms & Conditions", href: "#" },
-        { label: "Support Center", href: "#" },
-        { label: "Careers", href: "#" },
-      ],
-    },
-    {
       title: "Shop Categories",
       links: [
         { label: "Contact Us", href: "/contact" },
-        { label: "Information", href: "#" },
-        { label: "About Us", href: "#" },
-        { label: "Careers", href: "#" },
-        { label: "Next Stories", href: "#" },
+        { label: "About Us", href: "/about" },
       ],
     },
   ],
   help: {
     title: "Need Help? / Contact Us",
-    address: "258 Daniel Street, 2589 Phones Line Berlin, Germany",
-    hours: "Call us between 8:00 AM – 12PM",
-    phone: "+25896 3158 3228",
-    chatTitle: "Live Chat",
-    chatSubtitle: "Chat With an Experts",
+    address: STORE_ADDRESS,
+    hours: "Mon–Fri 7:30 AM – 10:30 PM, Sat–Sun 8:00 AM – 10:30 PM",
+    whatsappNumber: "+65-8185-0452",
   },
-  copyright: "Copyright 2024 ©Ekomart, All rights reserved.",
-  paymentLabel: "Payment Accepts:",
-  payments: ["Skrill", "VISA", "MC", "PayPal", "AMEX"],
+  copyright: "Copyright 2024 ©Farm To Home, All rights reserved.",
+};
+
+export const map: MapContent = {
+  heading: "Find Us",
+  address: STORE_ADDRESS,
 };

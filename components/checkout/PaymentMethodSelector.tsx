@@ -1,6 +1,6 @@
 "use client";
 
-export type PaymentMethod = "COD" | "PAYNOW_MANUAL";
+export type PaymentMethod = "PAYNOW_MANUAL" | "STRIPE";
 
 export default function PaymentMethodSelector({
   value,
@@ -10,11 +10,15 @@ export default function PaymentMethodSelector({
   onChange: (value: PaymentMethod) => void;
 }) {
   const options: { value: PaymentMethod; label: string; description: string }[] = [
-    { value: "COD", label: "Cash on Delivery", description: "Pay in cash when your order arrives." },
     {
       value: "PAYNOW_MANUAL",
       label: "PayNow",
       description: "Scan a QR code to pay — we'll confirm it shortly after.",
+    },
+    {
+      value: "STRIPE",
+      label: "Card",
+      description: "Pay securely by credit or debit card via Stripe.",
     },
   ];
 

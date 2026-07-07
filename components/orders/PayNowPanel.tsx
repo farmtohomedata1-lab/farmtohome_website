@@ -43,7 +43,6 @@ export default function PayNowPanel({
           alt="PayNow QR code"
           width={220}
           height={220}
-          unoptimized
           className="mx-auto mt-4 h-auto w-full max-w-[220px]"
         />
       ) : (

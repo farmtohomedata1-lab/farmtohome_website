@@ -37,7 +37,6 @@ export default function Testimonials({ content }: { content: TestimonialsContent
                   alt={testimonial.imageAlt || ""}
                   width={48}
                   height={48}
-                  unoptimized
                   className="h-12 w-12 rounded-full object-cover"
                 />
               )}

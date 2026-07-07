@@ -85,6 +85,10 @@ model SiteSettings {
   freeShippingThreshold Decimal @default(80) @db.Decimal(10, 2)
   standardDeliveryFee   Decimal @default(5) @db.Decimal(10, 2)
   paynowQrImageUrl      String? // admin-uploaded static PayNow QR code image
+  // Admin kill switch — when false, the coupon input is fully hidden (not
+  // just disabled) on /cart and /checkout, and the server rejects any
+  // coupon code even if a client somehow still sends one.
+  couponsEnabled        Boolean @default(true)
 }
 
 // Coupon codes for seasonal offers. `code` is normalized to uppercase on
@@ -155,15 +159,25 @@ model Order {
   landmark             String?
   deliveryDate         DateTime?
   orderNotes           String?
-  paymentMethod        String // "COD" | "PAYNOW_MANUAL"
+  // "PAYNOW_MANUAL" | "STRIPE" for every new order. "COD" is retired (no
+  // longer selectable/creatable) but historical orders placed before the
+  // retirement still carry it — never rewritten, see lib/orderPaymentLabels.ts.
+  paymentMethod        String
   // Kept completely separate from delivery/fulfillment concerns — an order
   // can be paid-but-not-delivered or delivered-but-payment-still-pending,
   // and these must never collapse into a single status field.
   paymentStatus        String      @default("PENDING") // "PENDING" | "PAID" | "FAILED"
   paymentReference     String? // empty until a real payment gateway exists
+  // Stripe's PaymentIntent id for STRIPE orders — the webhook (the only place
+  // that ever sets paymentStatus: PAID for a Stripe order) looks up the order
+  // by this field. Overwritten with a fresh PaymentIntent id on retry after a
+  // failed payment, so it always reflects the current/latest attempt.
+  stripePaymentIntentId String?    @unique
   // Customer clicked "I've paid" for manual PayNow — intent, NOT
   // verification. Only an admin's explicit "Mark as Paid" action (see
-  // app/admin/(protected)/orders/actions.ts) ever sets paymentStatus: PAID.
+  // app/admin/(protected)/orders/actions.ts) ever sets paymentStatus: PAID
+  // for a PayNow (or legacy COD) order. Stripe orders are never touched by
+  // that action — their paymentStatus is set exclusively by the webhook.
   customerDeclaredPaid Boolean     @default(false)
   subtotal             Decimal     @db.Decimal(10, 2)
   discountAmount       Decimal     @default(0) @db.Decimal(10, 2)
@@ -200,4 +214,21 @@ model LoginAttempt {
   failedCount   Int       @default(0)
   lockedUntil   DateTime?
   lastAttemptAt DateTime  @updatedAt
+}
+
+// Forensic trail of sensitive admin actions (who did what, to what, when) —
+// written best-effort from lib/audit/log.ts, never blocking the admin action
+// it's recording (a logging failure here is not a reason to fail an order
+// update). Deliberately only covers state-changing actions, not page views.
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  action     String // e.g. "order.marked_paid", "product.created"
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminEmail])
 }

@@ -37,7 +37,6 @@ export default function WeekendBanner({ content }: { content: WeekendBannerConte
               alt={content.imageAlt || ""}
               width={520}
               height={280}
-              unoptimized
               className="h-auto w-full max-w-md"
             />
           </div>

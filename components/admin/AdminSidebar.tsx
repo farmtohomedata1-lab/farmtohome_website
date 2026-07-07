@@ -82,6 +82,7 @@ export default function AdminSidebar() {
         {[
           { href: "/admin/shipping-settings", label: "Shipping Settings" },
           { href: "/admin/coupons", label: "Coupons" },
+          { href: "/admin/activity-log", label: "Activity Log" },
         ].map((link) => (
           <li key={link.href}>
             <Link

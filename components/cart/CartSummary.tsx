@@ -22,7 +22,7 @@ export default function CartSummary({
         {appliedCode && totals.discount > 0 && (
           <div className="flex justify-between">
             <dt className="text-gray-500">Discount ({appliedCode})</dt>
-            <dd className="font-medium text-sale-red">-{formatPrice(totals.discount)}</dd>
+            <dd className="font-medium text-brand-green">-{formatPrice(totals.discount)}</dd>
           </div>
         )}
         <div className="flex justify-between border-t border-gray-100 pt-2">

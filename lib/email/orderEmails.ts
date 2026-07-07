@@ -1,13 +1,10 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/format";
+import { formatDateSGT, formatDateTimeSGT, formatPrice } from "@/lib/format";
 import { getResendClient } from "./resend";
 import { EMAIL_FROM_ADDRESS, SHOP_ALERT_EMAIL } from "./config";
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  COD: "Cash on Delivery",
-  PAYNOW_MANUAL: "PayNow",
-};
+import { escapeHtml } from "./escapeHtml";
+import { PAYMENT_METHOD_LABELS } from "@/lib/orderPaymentLabels";
 
 async function loadOrderForEmail(orderId: string) {
   return prisma.order.findUnique({
@@ -18,27 +15,17 @@ async function loadOrderForEmail(orderId: string) {
 
 type OrderForEmail = NonNullable<Awaited<ReturnType<typeof loadOrderForEmail>>>;
 
-// e.g. "4 July 2026, 8:38 PM" — the exact real order.createdAt timestamp,
-// not just the date, so both emails show precisely when the order landed.
-function formatOrderDateTime(date: Date): string {
-  const datePart = date.toLocaleDateString("en-SG", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const timePart = date.toLocaleTimeString("en-SG", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-  return `${datePart}, ${timePart}`;
-}
-
+// Every value below came from a checkout form (or, for item names, the
+// admin product catalog) and gets interpolated into a raw HTML string sent
+// through Resend — unlike JSX this does not auto-escape, so anything
+// customer-typed (name, phone, address, coupon code) must be escaped by
+// hand or a crafted checkout submission could inject markup into the shop
+// owner's inbox.
 function renderOrderSummaryHtml(order: OrderForEmail): string {
   const itemsHtml = order.items
     .map(
       (item) => `<tr>
-        <td style="padding:4px 8px">${item.name}</td>
+        <td style="padding:4px 8px">${escapeHtml(item.name)}</td>
         <td style="padding:4px 8px">${item.quantity}</td>
         <td style="padding:4px 8px">${formatPrice(item.price.toNumber())}</td>
         <td style="padding:4px 8px">${formatPrice(item.price.toNumber() * item.quantity)}</td>
@@ -46,19 +33,13 @@ function renderOrderSummaryHtml(order: OrderForEmail): string {
     )
     .join("");
 
-  const deliveryDateText = order.deliveryDate
-    ? new Date(order.deliveryDate).toLocaleDateString("en-SG", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "Not specified";
+  const deliveryDateText = order.deliveryDate ? formatDateSGT(order.deliveryDate, "long") : "Not specified";
 
   return `
     <h2>Order #${order.id.slice(-8).toUpperCase()}</h2>
-    <p><strong>Name:</strong> ${order.shippingFullName}</p>
-    <p><strong>Phone:</strong> ${order.shippingPhone}</p>
-    <p><strong>Order Placed:</strong> ${formatOrderDateTime(order.createdAt)}</p>
+    <p><strong>Name:</strong> ${escapeHtml(order.shippingFullName)}</p>
+    <p><strong>Phone:</strong> ${escapeHtml(order.shippingPhone)}</p>
+    <p><strong>Order Placed:</strong> ${formatDateTimeSGT(order.createdAt)}</p>
     <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">
       <thead>
         <tr>
@@ -73,7 +54,7 @@ function renderOrderSummaryHtml(order: OrderForEmail): string {
     <p>Subtotal: ${formatPrice(order.subtotal.toNumber())}</p>
     ${
       order.discountAmount.toNumber() > 0
-        ? `<p>Discount${order.couponCode ? ` (${order.couponCode})` : ""}: -${formatPrice(order.discountAmount.toNumber())}</p>`
+        ? `<p>Discount${order.couponCode ? ` (${escapeHtml(order.couponCode)})` : ""}: -${formatPrice(order.discountAmount.toNumber())}</p>`
         : ""
     }
     <p>Delivery Fee: ${
@@ -82,9 +63,9 @@ function renderOrderSummaryHtml(order: OrderForEmail): string {
     <p><strong>Total: ${formatPrice(order.total.toNumber())}</strong></p>
     <p>Payment Method: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
     <p>Delivery Date: ${deliveryDateText}</p>
-    <p>Delivering to: ${order.shippingBlockStreet}${
-      order.shippingUnitNumber ? `, ${order.shippingUnitNumber}` : ""
-    }, Singapore ${order.shippingPostalCode}</p>
+    <p>Delivering to: ${escapeHtml(order.shippingBlockStreet)}${
+      order.shippingUnitNumber ? `, ${escapeHtml(order.shippingUnitNumber)}` : ""
+    }, Singapore ${escapeHtml(order.shippingPostalCode)}</p>
   `;
 }
 
@@ -144,7 +125,7 @@ export async function sendOrderAlertEmail(orderId: string): Promise<void> {
       from: EMAIL_FROM_ADDRESS,
       to: SHOP_ALERT_EMAIL,
       subject: `New Order — #${order.id.slice(-8).toUpperCase()}`,
-      html: `<p>New order from ${order.customer.email}:</p>${renderOrderSummaryHtml(order)}`,
+      html: `<p>New order from ${escapeHtml(order.customer.email)}:</p>${renderOrderSummaryHtml(order)}`,
     });
 
     if (error) {
