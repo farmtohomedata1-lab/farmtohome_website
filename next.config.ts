@@ -12,6 +12,13 @@ import { withSentryConfig } from "@sentry/nextjs";
 // - images.unsplash.com — placeholder product photography (content/*.ts)
 // - www.google.com — the homepage's embedded Google Map (no API key, plain
 //   iframe embed)
+// next.config's headers() runs at config-eval time (dev server boot / next
+// build), so this reflects the real mode each time — never a per-request
+// check. Next.js itself forces NODE_ENV to "development" under `next dev`
+// and "production" under `next build`, so this can't be spoofed by an env
+// var left over from something else.
+const isDev = process.env.NODE_ENV === "development";
+
 const cspDirectives = [
   `default-src 'self'`,
   // 'unsafe-inline' is required here because this is a static CSP (declared
@@ -22,7 +29,12 @@ const cspDirectives = [
   // as the app actually needs, so this isn't "no CSP", it's "CSP that can't
   // stop inline-script XSS specifically" — a real gap, but a known, deliberate
   // one, not an oversight.
-  `script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com`,
+  // 'unsafe-eval' is dev-only: React's dev-mode stack-trace reconstruction
+  // needs it (see the console warning it prints otherwise), and it's never
+  // used in production React regardless of what the CSP allows — but the
+  // production CSP must never carry it, so it's added conditionally rather
+  // than unconditionally like the rest of this directive.
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com https://challenges.cloudflare.com`,
   // Same inline-attribute reality for style-src: framer-motion (used
   // throughout components/home, components/about, etc.) animates via inline
   // `style` attributes, which style-src also governs.
