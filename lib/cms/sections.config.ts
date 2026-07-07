@@ -27,6 +27,7 @@ export interface ObjectListFieldDef {
   type: "objectList";
   itemLabel: string; // e.g. "Category" — used for "+ Add Category"
   itemFields: ScalarFieldDef[];
+  maxItems?: number; // omit for no cap (e.g. Gallery's images)
 }
 
 export type FieldDef = ScalarFieldDef | ObjectListFieldDef;
@@ -101,6 +102,26 @@ export const sections: SectionDef[] = [
       { key: "price", label: "Price", type: "text" },
       { key: "image", label: "Hero Image", type: "image" },
       { key: "imageAlt", label: "Image Alt Text", type: "text" },
+      {
+        key: "heroStyle",
+        label: "Hero Style",
+        type: "select",
+        options: [
+          { value: "static", label: "Static (banner above)" },
+          { value: "carousel", label: "Carousel (images below)" },
+        ],
+      },
+      {
+        key: "carouselImages",
+        label: "Carousel Images (up to 5 — only used when Hero Style is Carousel)",
+        type: "objectList",
+        itemLabel: "Image",
+        maxItems: 5,
+        itemFields: [
+          { key: "image", label: "Image", type: "image" },
+          { key: "imageAlt", label: "Image Alt Text", type: "text" },
+        ],
+      },
     ],
   },
   {

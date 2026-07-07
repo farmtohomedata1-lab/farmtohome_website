@@ -104,7 +104,11 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
 
   const threshold = settings?.freeShippingThreshold.toNumber() ?? 80;
   const fee = settings?.standardDeliveryFee.toNumber() ?? 5;
-  const totals = computeCartTotals(lineItems, coupon, threshold, fee);
+  const taxSettings = {
+    taxEnabled: settings?.taxEnabled ?? false,
+    taxPercentage: settings?.taxPercentage.toNumber() ?? 9,
+  };
+  const totals = computeCartTotals(lineItems, coupon, threshold, fee, taxSettings);
 
   let shipping: {
     fullName: string;
@@ -194,6 +198,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
         subtotal: totals.subtotal,
         discountAmount: totals.discount,
         shippingFee: totals.shippingFee,
+        taxAmount: totals.taxAmount,
         total: totals.total,
         couponCode: normalizedCouponCode,
         items: {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/lib/cartStore";
 import { computeCartTotals, type CouponRate } from "@/lib/cartTotals";
 import FreeShippingBar from "./FreeShippingBar";
@@ -13,10 +14,14 @@ export default function CartClient({
   freeShippingThreshold,
   standardDeliveryFee,
   couponsEnabled,
+  taxEnabled,
+  taxPercentage,
 }: {
   freeShippingThreshold: number;
   standardDeliveryFee: number;
   couponsEnabled: boolean;
+  taxEnabled: boolean;
+  taxPercentage: number;
 }) {
   const items = useCartStore((state) => state.items);
   const setQuantity = useCartStore((state) => state.setQuantity);
@@ -31,7 +36,8 @@ export default function CartClient({
     items,
     appliedCoupon,
     freeShippingThreshold,
-    standardDeliveryFee
+    standardDeliveryFee,
+    { taxEnabled, taxPercentage }
   );
 
   function handleClearAll() {
@@ -59,7 +65,11 @@ export default function CartClient({
 
   return (
     <div className="mx-auto w-full max-w-[1320px] px-4 py-8 sm:px-6">
-      <FreeShippingBar subtotal={totals.subtotal} threshold={freeShippingThreshold} />
+      <FreeShippingBar
+        subtotal={totals.subtotal}
+        threshold={freeShippingThreshold}
+        shippingFee={totals.shippingFee}
+      />
 
       <div className="mt-6 lg:flex lg:items-start lg:gap-8">
         <div className="min-w-0 flex-1">
@@ -72,14 +82,16 @@ export default function CartClient({
                 <span className="w-20 text-right">Subtotal</span>
               </span>
             </div>
-            {items.map((item) => (
-              <CartItemRow
-                key={item.productId}
-                item={item}
-                onQuantityChange={(quantity) => setQuantity(item.productId, quantity)}
-                onRemove={() => removeItem(item.productId)}
-              />
-            ))}
+            <AnimatePresence initial={false}>
+              {items.map((item) => (
+                <CartItemRow
+                  key={item.productId}
+                  item={item}
+                  onQuantityChange={(quantity) => setQuantity(item.productId, quantity)}
+                  onRemove={() => removeItem(item.productId)}
+                />
+              ))}
+            </AnimatePresence>
           </div>
 
           <div className="mt-4 flex items-center justify-between">

@@ -128,6 +128,9 @@ export default async function ProductDetailPage({
                   image: product.image,
                   pack: product.pack,
                   inStock: product.inStock,
+                  chargeShipping: product.chargeShipping,
+                  taxable: product.taxable,
+                  taxOverridePercent: product.taxOverridePercent ? product.taxOverridePercent.toNumber() : null,
                 }}
                 variant="detail"
               />

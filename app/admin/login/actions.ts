@@ -16,9 +16,18 @@ export async function signIn(_prevState: LoginState, formData: FormData): Promis
     return { error: "Enter your email and password." };
   }
 
+  // Prefixed so this can never share a lockout with the customer-facing
+  // login at app/login/actions.ts — without this, someone could fail
+  // customer login 5x for the admin's own email (a public, unauthenticated
+  // form) and lock the admin out of /admin/login for 15 minutes, repeatedly,
+  // since both previously checked the bare email against the same
+  // LoginAttempt row. Same prefixing pattern as the "coupon:"/"signup:" keys
+  // elsewhere in this table.
+  const rateLimitKey = `admin:${email}`;
+
   // Checked before ever touching Supabase Auth, so a locked-out account
   // can't be used to keep guessing passwords.
-  const gate = await checkLoginAllowed(email);
+  const gate = await checkLoginAllowed(rateLimitKey);
   if (!gate.allowed) {
     const minutes = Math.ceil(gate.retryAfterSeconds / 60);
     return {
@@ -30,10 +39,10 @@ export async function signIn(_prevState: LoginState, formData: FormData): Promis
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    await recordFailedLogin(email);
+    await recordFailedLogin(rateLimitKey);
     return { error: "Invalid email or password." };
   }
 
-  await clearLoginAttempts(email);
+  await clearLoginAttempts(rateLimitKey);
   redirect("/admin/cms");
 }

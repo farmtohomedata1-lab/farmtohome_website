@@ -10,12 +10,14 @@ import { escapeHtml } from "./escapeHtml";
 function describeLockoutTarget(key: string): string {
   if (key.startsWith("signup:")) return `signup attempts from IP ${key.slice("signup:".length)}`;
   if (key.startsWith("coupon:")) return `coupon-code attempts from IP ${key.slice("coupon:".length)}`;
+  if (key.startsWith("admin:")) return `admin login attempts for ${key.slice("admin:".length)}`;
   return `login attempts for ${key}`;
 }
 
 function describeLockoutKind(key: string): string {
   if (key.startsWith("signup:")) return "signup";
   if (key.startsWith("coupon:")) return "coupon";
+  if (key.startsWith("admin:")) return "admin login";
   return "login";
 }
 

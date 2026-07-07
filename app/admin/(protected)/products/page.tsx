@@ -41,6 +41,9 @@ export default async function ProductsPage({
           categoryId: p.categoryId ?? "",
           brandId: p.brandId ?? "",
           detailedDescription: p.detailedDescription ?? "",
+          chargeShipping: p.chargeShipping,
+          taxable: p.taxable,
+          taxOverridePercent: p.taxOverridePercent ? p.taxOverridePercent.toNumber() : null,
         }))}
         availableTags={productTags}
         activeTag={activeTag}

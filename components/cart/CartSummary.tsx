@@ -31,6 +31,12 @@ export default function CartSummary({
             {totals.shippingFee === 0 ? "Free" : formatPrice(totals.shippingFee)}
           </dd>
         </div>
+        {totals.taxAmount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-gray-500">Tax</dt>
+            <dd className="font-medium text-gray-900">{formatPrice(totals.taxAmount)}</dd>
+          </div>
+        )}
         <div className="flex justify-between border-t border-gray-200 pt-2 text-base">
           <dt className="font-bold text-dark-green">Total</dt>
           <dd className="font-bold text-dark-green">{formatPrice(totals.total)}</dd>

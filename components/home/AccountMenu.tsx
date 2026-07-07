@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { createCustomerClient } from "@/lib/supabase/customerClient";
+import { signOutCustomer } from "@/lib/auth/actions";
 import type { CustomerHeaderInfo } from "@/lib/auth/getCustomerHeaderInfo";
 import { buttonMotion } from "./motion";
 import { IconChevronDown, IconUser } from "./icons";
 
 // Logged-in state of the header's account button: a small dropdown with
 // "My Account" and "Sign Out", instead of the plain link used when logged
-// out (see SiteHeader.tsx). Signs out via the browser Supabase client
-// directly so the session cookie clears and the header can flip back to
-// "Login" immediately, with no full page reload.
+// out (see SiteHeader.tsx). Sign-out itself is a Server Action
+// (signOutCustomer) — the session cookie is httpOnly, so only the server can
+// actually clear it; see the comment on signOutCustomer for why a
+// client-side supabase.auth.signOut() call here didn't work. onSignedOut()
+// flips the header's local state immediately for a snappy transition while
+// the redirect the action triggers is still in flight.
 export default function AccountMenu({
   customerInfo,
   onSignedOut,
@@ -21,9 +23,8 @@ export default function AccountMenu({
   customerInfo: CustomerHeaderInfo;
   onSignedOut: () => void;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,16 +37,10 @@ export default function AccountMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  async function handleSignOut() {
-    setIsSigningOut(true);
-    const supabase = createCustomerClient();
-    await supabase.auth.signOut();
+  function handleSignOut() {
     setOpen(false);
     onSignedOut();
-    // Any page could have rendered customer-specific content while
-    // authenticated (e.g. /account, /checkout) — navigate home rather than
-    // leaving that stale underneath the now-signed-out header.
-    router.push("/");
+    startTransition(() => signOutCustomer());
   }
 
   const label = customerInfo.name || customerInfo.email;
@@ -82,10 +77,10 @@ export default function AccountMenu({
             type="button"
             role="menuitem"
             onClick={handleSignOut}
-            disabled={isSigningOut}
+            disabled={isPending}
             className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 disabled:opacity-60"
           >
-            {isSigningOut ? "Signing out..." : "Sign Out"}
+            {isPending ? "Signing out..." : "Sign Out"}
           </button>
         </div>
       )}

@@ -23,6 +23,8 @@ export default async function ShippingSettingsPage() {
         freeShippingThreshold={settings.freeShippingThreshold.toNumber()}
         standardDeliveryFee={settings.standardDeliveryFee.toNumber()}
         paynowQrImageUrl={settings.paynowQrImageUrl ?? ""}
+        taxEnabled={settings.taxEnabled}
+        taxPercentage={settings.taxPercentage.toNumber()}
       />
     </div>
   );

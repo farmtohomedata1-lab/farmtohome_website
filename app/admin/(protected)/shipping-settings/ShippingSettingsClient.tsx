@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import NumberInput from "@/components/admin/NumberInput";
+import ToggleField from "@/components/admin/ToggleField";
 import ImageUploadField from "../cms/ImageUploadField";
 import { updateSiteSettings } from "./actions";
 
@@ -10,15 +11,21 @@ export default function ShippingSettingsClient({
   freeShippingThreshold,
   standardDeliveryFee,
   paynowQrImageUrl,
+  taxEnabled,
+  taxPercentage,
 }: {
   id: string;
   freeShippingThreshold: number;
   standardDeliveryFee: number;
   paynowQrImageUrl: string;
+  taxEnabled: boolean;
+  taxPercentage: number;
 }) {
   const [threshold, setThreshold] = useState(freeShippingThreshold);
   const [fee, setFee] = useState(standardDeliveryFee);
   const [qrImageUrl, setQrImageUrl] = useState(paynowQrImageUrl);
+  const [taxOn, setTaxOn] = useState(taxEnabled);
+  const [taxRate, setTaxRate] = useState(taxPercentage);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
@@ -31,6 +38,8 @@ export default function ShippingSettingsClient({
         freeShippingThreshold: threshold,
         standardDeliveryFee: fee,
         paynowQrImageUrl: qrImageUrl,
+        taxEnabled: taxOn,
+        taxPercentage: taxRate,
       });
       if (result.error) {
         setMessage({ type: "error", text: result.error });
@@ -58,6 +67,18 @@ export default function ShippingSettingsClient({
           value={qrImageUrl}
           onChange={(url) => setQrImageUrl(url)}
         />
+      </div>
+
+      <div className="mt-6 border-t border-gray-100 pt-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-dark-green">Tax</h2>
+        <div className="mt-3 grid grid-cols-1 gap-4">
+          <ToggleField label="Enable Tax" checked={taxOn} onChange={setTaxOn} />
+          <NumberInput
+            label="Tax Percentage (%)"
+            value={taxRate}
+            onChange={(v) => setTaxRate(v ?? 0)}
+          />
+        </div>
       </div>
 
       {message && (

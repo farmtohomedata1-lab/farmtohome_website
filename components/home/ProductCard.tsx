@@ -21,6 +21,9 @@ export interface ProductCardProduct {
   inStock: boolean;
   rating: number;
   image?: string | null;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -73,6 +76,9 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
             isOnSale: product.isOnSale,
             inStock: true,
             image: product.image ?? null,
+            chargeShipping: product.chargeShipping,
+            taxable: product.taxable,
+            taxOverridePercent: product.taxOverridePercent,
           })
         }
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -115,6 +121,9 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
             image: product.image ?? null,
             pack: product.pack ?? null,
             inStock: product.inStock,
+            chargeShipping: product.chargeShipping,
+            taxable: product.taxable,
+            taxOverridePercent: product.taxOverridePercent,
           }}
           variant="card"
           addLabel={productCardLabels.addToCart}

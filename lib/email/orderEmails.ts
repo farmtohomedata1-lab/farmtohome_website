@@ -60,6 +60,11 @@ function renderOrderSummaryHtml(order: OrderForEmail): string {
     <p>Delivery Fee: ${
       order.shippingFee.toNumber() === 0 ? "Free" : formatPrice(order.shippingFee.toNumber())
     }</p>
+    ${
+      order.taxAmount.toNumber() > 0
+        ? `<p>Tax: ${formatPrice(order.taxAmount.toNumber())}</p>`
+        : ""
+    }
     <p><strong>Total: ${formatPrice(order.total.toNumber())}</strong></p>
     <p>Payment Method: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
     <p>Delivery Date: ${deliveryDateText}</p>

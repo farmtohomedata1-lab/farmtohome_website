@@ -10,8 +10,16 @@ import {
   stagger,
 } from "./motion";
 import { IconArrowRight } from "./icons";
+import HeroCarousel from "./HeroCarousel";
 
 export default function Hero({ content }: { content: HeroContent }) {
+  // Anything but "carousel" (including absent, on every hero row that
+  // existed before this feature) means static — and "carousel" with zero
+  // images uploaded also falls back to static rather than an empty image
+  // slot, per the graceful-degradation requirement.
+  const carouselImages = content.carouselImages ?? [];
+  const useCarouselMode = content.heroStyle === "carousel" && carouselImages.length > 0;
+
   return (
     <section className="mx-auto w-full max-w-[1320px] px-4 pt-6 sm:px-6">
       <div className="grid overflow-hidden rounded-lg bg-cream lg:grid-cols-2">
@@ -72,23 +80,27 @@ export default function Hero({ content }: { content: HeroContent }) {
           </motion.div>
         </motion.div>
 
-        {content.image && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={slideFromRight}
-            transition={{ delay: 0.15 }}
-            className="flex items-center justify-center px-6 pb-8 lg:p-0"
-          >
-            <Image
-              src={content.image}
-              alt={content.imageAlt || ""}
-              width={640}
-              height={440}
-              priority
-              className="h-auto w-full max-w-xl"
-            />
-          </motion.div>
+        {useCarouselMode ? (
+          <HeroCarousel images={carouselImages} />
+        ) : (
+          content.image && (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={slideFromRight}
+              transition={{ delay: 0.15 }}
+              className="flex items-center justify-center px-6 pb-8 lg:p-0"
+            >
+              <Image
+                src={content.image}
+                alt={content.imageAlt || ""}
+                width={640}
+                height={440}
+                priority
+                className="h-auto w-full max-w-xl"
+              />
+            </motion.div>
+          )
         )}
       </div>
     </section>

@@ -39,6 +39,9 @@ export interface FeaturedProduct {
   inStock: boolean;
   rating: number;
   image: string | null;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 /**
@@ -63,6 +66,9 @@ export async function getFeaturedProducts(tag: string): Promise<FeaturedProduct[
       inStock: product.inStock,
       rating: product.rating,
       image: product.image,
+      chargeShipping: product.chargeShipping,
+      taxable: product.taxable,
+      taxOverridePercent: product.taxOverridePercent ? product.taxOverridePercent.toNumber() : null,
     }));
   } catch (err) {
     console.error(`[cms] getFeaturedProducts(${tag}) failed:`, err);

@@ -19,6 +19,7 @@ export default function FieldRenderer({
   if (field.type === "objectList") {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
     const itemFields = field.itemFields;
+    const atMax = field.maxItems != null && items.length >= field.maxItems;
 
     function updateItem(index: number, key: string, itemValue: unknown) {
       const next = items.map((item, i) => (i === index ? { ...item, [key]: itemValue } : item));
@@ -71,13 +72,19 @@ export default function FieldRenderer({
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={addItem}
-          className="mt-3 rounded-md border border-brand-green px-3 py-1.5 text-xs font-semibold text-brand-green hover:bg-brand-green/5"
-        >
-          + Add {field.itemLabel}
-        </button>
+        {atMax ? (
+          <p className="mt-3 text-xs text-gray-400">
+            Maximum of {field.maxItems} reached — remove one to add another.
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={addItem}
+            className="mt-3 rounded-md border border-brand-green px-3 py-1.5 text-xs font-semibold text-brand-green hover:bg-brand-green/5"
+          >
+            + Add {field.itemLabel}
+          </button>
+        )}
       </div>
     );
   }

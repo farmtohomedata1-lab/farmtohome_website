@@ -2,26 +2,27 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import type { GalleryContent } from "@/content/homepage";
+import type { HeroCarouselImage } from "@/content/homepage";
 import { useCarousel } from "@/lib/useCarousel";
+import { slideFromRight } from "./motion";
 import { IconArrowRight } from "./icons";
-import SectionHeading from "./SectionHeading";
 
-// CMS-managed image carousel (admin can add/reorder/remove images the same
-// way as every other admin-managed image list). Auto-advance/manual-nav
-// behavior lives in lib/useCarousel.ts, shared with HeroCarousel so both
-// carousels on the site behave identically.
-export default function Gallery({ content }: { content: GalleryContent }) {
-  const images = content.images;
+// Same auto-advance/manual-nav behavior as components/home/Gallery.tsx (via
+// the shared lib/useCarousel.ts hook), sized and positioned to drop into
+// Hero's image slot without shifting layout when switching Static/Carousel.
+export default function HeroCarousel({ images }: { images: HeroCarouselImage[] }) {
   const { index, handleManualNav } = useCarousel(images.length);
-
-  if (images.length === 0) return null;
   const current = images[index];
 
   return (
-    <section id="gallery" className="mx-auto w-full max-w-[1320px] px-4 py-12 sm:px-6">
-      {content.heading && <SectionHeading title={content.heading} />}
-      <div className="relative mt-6 overflow-hidden rounded-lg bg-gray-section">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={slideFromRight}
+      transition={{ delay: 0.15 }}
+      className="relative flex items-center justify-center px-6 pb-8 lg:p-0"
+    >
+      <div className="relative w-full max-w-xl overflow-hidden rounded-lg">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
@@ -33,9 +34,10 @@ export default function Gallery({ content }: { content: GalleryContent }) {
             <Image
               src={current.image}
               alt={current.imageAlt || ""}
-              width={1200}
-              height={480}
-              className="h-64 w-full object-cover sm:h-80 lg:h-[420px]"
+              width={640}
+              height={440}
+              priority
+              className="h-auto w-full"
             />
           </motion.div>
         </AnimatePresence>
@@ -46,19 +48,19 @@ export default function Gallery({ content }: { content: GalleryContent }) {
               type="button"
               aria-label="Previous image"
               onClick={() => handleManualNav(-1)}
-              className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-dark-green shadow-md hover:bg-white"
+              className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-dark-green shadow-md hover:bg-white"
             >
-              <IconArrowRight className="h-4 w-4 rotate-180" />
+              <IconArrowRight className="h-3.5 w-3.5 rotate-180" />
             </button>
             <button
               type="button"
               aria-label="Next image"
               onClick={() => handleManualNav(1)}
-              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-dark-green shadow-md hover:bg-white"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-dark-green shadow-md hover:bg-white"
             >
-              <IconArrowRight className="h-4 w-4" />
+              <IconArrowRight className="h-3.5 w-3.5" />
             </button>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
               {images.map((image, i) => (
                 <span
                   key={image.id}
@@ -71,6 +73,6 @@ export default function Gallery({ content }: { content: GalleryContent }) {
           </>
         )}
       </div>
-    </section>
+    </motion.div>
   );
 }

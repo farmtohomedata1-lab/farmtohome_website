@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useCartQuantity, useCartStore } from "@/lib/cartStore";
+import { buttonMotion } from "@/components/home/motion";
 import { IconCart } from "@/components/home/icons";
 
 export interface CartQuantityControlProduct {
@@ -11,6 +13,9 @@ export interface CartQuantityControlProduct {
   image: string | null;
   pack: string | null;
   inStock: boolean;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 const VARIANT_CLASSES = {
@@ -20,6 +25,9 @@ const VARIANT_CLASSES = {
     stepper: "flex w-full items-center justify-between rounded-md border border-gray-300",
     stepperButton: "px-2.5 py-1.5 text-sm font-semibold text-gray-600 hover:bg-gray-50",
     qty: "flex-1 text-center text-sm font-semibold text-dark-green",
+    wrapper: "flex flex-col gap-2",
+    buyNowButton:
+      "w-full rounded-md border border-brand-green py-2 text-xs font-semibold text-brand-green hover:bg-brand-green/5",
   },
   detail: {
     addButton:
@@ -27,6 +35,9 @@ const VARIANT_CLASSES = {
     stepper: "flex items-center rounded-md border border-gray-300",
     stepperButton: "px-3 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50",
     qty: "w-14 text-center text-sm font-semibold text-dark-green",
+    wrapper: "flex items-center gap-3",
+    buyNowButton:
+      "rounded-md border border-brand-green px-6 py-3 text-sm font-semibold text-brand-green hover:bg-brand-green/5",
   },
 } as const;
 
@@ -45,6 +56,7 @@ export default function CartQuantityControl({
   addLabel?: string;
   showCartIcon?: boolean;
 }) {
+  const router = useRouter();
   const quantity = useCartQuantity(product.id);
   const addItem = useCartStore((state) => state.addItem);
   const setQuantity = useCartStore((state) => state.setQuantity);
@@ -58,9 +70,19 @@ export default function CartQuantityControl({
         price: product.price,
         image: product.image,
         pack: product.pack,
+        chargeShipping: product.chargeShipping,
+        taxable: product.taxable,
+        taxOverridePercent: product.taxOverridePercent,
       },
       1
     );
+  }
+
+  // Deliberately goes to /cart, not /checkout — checkout requires a logged-in
+  // customer (proxy.ts), and this button is meant as a checkpoint before that
+  // gate, not a bypass of it.
+  function handleBuyNow() {
+    router.push("/cart");
   }
 
   if (quantity === 0) {
@@ -82,37 +104,51 @@ export default function CartQuantityControl({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.18 }}
-      className={classes.stepper}
-    >
-      <button
-        type="button"
-        onClick={() => setQuantity(product.id, quantity - 1)}
-        className={classes.stepperButton}
-        aria-label="Decrease quantity"
-      >
-        −
-      </button>
-      <motion.span
-        key={quantity}
-        initial={{ scale: 1.25 }}
-        animate={{ scale: 1 }}
+    <div className={classes.wrapper}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.18 }}
-        className={classes.qty}
+        className={classes.stepper}
       >
-        {quantity}
-      </motion.span>
-      <button
+        <button
+          type="button"
+          onClick={() => setQuantity(product.id, quantity - 1)}
+          className={classes.stepperButton}
+          aria-label="Decrease quantity"
+        >
+          −
+        </button>
+        <motion.span
+          key={quantity}
+          initial={{ scale: 1.25 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.18 }}
+          className={classes.qty}
+        >
+          {quantity}
+        </motion.span>
+        <button
+          type="button"
+          onClick={() => setQuantity(product.id, quantity + 1)}
+          className={classes.stepperButton}
+          aria-label="Increase quantity"
+        >
+          +
+        </button>
+      </motion.div>
+
+      <motion.button
+        {...buttonMotion}
         type="button"
-        onClick={() => setQuantity(product.id, quantity + 1)}
-        className={classes.stepperButton}
-        aria-label="Increase quantity"
+        onClick={handleBuyNow}
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.18, delay: 0.05 }}
+        className={classes.buyNowButton}
       >
-        +
-      </button>
-    </motion.div>
+        Buy Now
+      </motion.button>
+    </div>
   );
 }

@@ -33,6 +33,9 @@ export interface AdminProduct {
   categoryId: string;
   brandId: string;
   detailedDescription: string;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 export interface NamedOption {
@@ -52,6 +55,9 @@ const blankForm: ProductFormValues = {
   categoryId: "",
   brandId: "",
   detailedDescription: "",
+  chargeShipping: true,
+  taxable: true,
+  taxOverridePercent: null,
 };
 
 export default function ProductsClient({
@@ -193,6 +199,9 @@ function ProductRow({
             categoryId: product.categoryId,
             brandId: product.brandId,
             detailedDescription: product.detailedDescription,
+            chargeShipping: product.chargeShipping,
+            taxable: product.taxable,
+            taxOverridePercent: product.taxOverridePercent,
           }}
           categories={categories}
           brands={brands}
@@ -338,6 +347,9 @@ function ProductForm({
           categoryId: values.categoryId,
           brandId: values.brandId,
           detailedDescription: values.detailedDescription,
+          chargeShipping: values.chargeShipping,
+          taxable: values.taxable,
+          taxOverridePercent: values.taxOverridePercent,
         });
         setValues(blankForm);
       }
@@ -417,7 +429,24 @@ function ProductForm({
           checked={values.discountActive}
           onChange={(v) => update("discountActive", v)}
         />
+        <ToggleField
+          label="Charge Shipping"
+          checked={values.chargeShipping}
+          onChange={(v) => update("chargeShipping", v)}
+        />
+        <ToggleField
+          label="Taxable"
+          checked={values.taxable}
+          onChange={(v) => update("taxable", v)}
+        />
       </div>
+
+      <NumberInput
+        label="Override Tax % (optional — blank uses the global rate)"
+        value={values.taxOverridePercent}
+        onChange={(v) => update("taxOverridePercent", v)}
+        allowNull
+      />
 
       <ImageUploadField label="Image" value={values.image} onChange={(url) => update("image", url)} />
 

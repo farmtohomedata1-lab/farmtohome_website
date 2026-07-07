@@ -61,6 +61,9 @@ export interface ProductFormValues {
   categoryId: string; // "" = none
   brandId: string; // "" = none
   detailedDescription: string; // "" = none (renders no section on the PDP)
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null; // null = use SiteSettings.taxPercentage
 }
 
 export async function createProduct(values: ProductFormValues): Promise<{ error?: string }> {
@@ -68,6 +71,9 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
 
   if (!values.name.trim() || !(values.price > 0)) {
     return { error: "Name and a price greater than 0 are required." };
+  }
+  if (values.taxOverridePercent != null && values.taxOverridePercent < 0) {
+    return { error: "Override tax percentage can't be negative." };
   }
 
   const isOnSale = computeIsOnSale(values);
@@ -89,6 +95,9 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
         featuredTags: [],
         categoryId: values.categoryId || null,
         brandId: values.brandId || null,
+        chargeShipping: values.chargeShipping,
+        taxable: values.taxable,
+        taxOverridePercent: values.taxOverridePercent,
       },
     });
   } catch (err) {
@@ -116,6 +125,9 @@ export async function updateProduct(
   if (!values.name.trim() || !(values.price > 0)) {
     return { error: "Name and a price greater than 0 are required." };
   }
+  if (values.taxOverridePercent != null && values.taxOverridePercent < 0) {
+    return { error: "Override tax percentage can't be negative." };
+  }
 
   const isOnSale = computeIsOnSale(values);
 
@@ -135,6 +147,9 @@ export async function updateProduct(
         detailedDescription: values.detailedDescription.trim() || null,
         categoryId: values.categoryId || null,
         brandId: values.brandId || null,
+        chargeShipping: values.chargeShipping,
+        taxable: values.taxable,
+        taxOverridePercent: values.taxOverridePercent,
       },
     });
   } catch (err) {

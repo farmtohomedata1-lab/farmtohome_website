@@ -146,6 +146,9 @@ export default async function ShopPage({
                 isOnSale: p.isOnSale,
                 inStock: p.inStock,
                 image: p.image,
+                chargeShipping: p.chargeShipping,
+                taxable: p.taxable,
+                taxOverridePercent: p.taxOverridePercent ? p.taxOverridePercent.toNumber() : null,
               }))}
               searchTerm={filters.search}
               clearSearchHref={clearSearchHref(rawParams)}

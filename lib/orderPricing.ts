@@ -13,6 +13,9 @@ export interface ResolvedLineItem {
   price: number;
   quantity: number;
   inStock: boolean;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 // Re-fetches real current Product rows for the given ids — never trusts a
@@ -38,6 +41,9 @@ export async function resolveLineItems(items: PricedItem[]): Promise<ResolvedLin
         price: product.price.toNumber(),
         quantity: item.quantity,
         inStock: product.inStock,
+        chargeShipping: product.chargeShipping,
+        taxable: product.taxable,
+        taxOverridePercent: product.taxOverridePercent ? product.taxOverridePercent.toNumber() : null,
       };
     });
 }

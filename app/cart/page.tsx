@@ -21,7 +21,13 @@ interface CartHeroContent {
 
 // Schema defaults — used only if the SiteSettings singleton row is somehow
 // missing, so this page never crashes waiting on it.
-const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5, couponsEnabled: true };
+const DEFAULT_SITE_SETTINGS = {
+  freeShippingThreshold: 80,
+  standardDeliveryFee: 5,
+  couponsEnabled: true,
+  taxEnabled: false,
+  taxPercentage: 9,
+};
 
 export default async function CartPage() {
   const [settings, hero, featureBand] = await Promise.all([
@@ -35,6 +41,8 @@ export default async function CartPage() {
   const standardDeliveryFee =
     settings?.standardDeliveryFee.toNumber() ?? DEFAULT_SITE_SETTINGS.standardDeliveryFee;
   const couponsEnabled = settings?.couponsEnabled ?? DEFAULT_SITE_SETTINGS.couponsEnabled;
+  const taxEnabled = settings?.taxEnabled ?? DEFAULT_SITE_SETTINGS.taxEnabled;
+  const taxPercentage = settings?.taxPercentage.toNumber() ?? DEFAULT_SITE_SETTINGS.taxPercentage;
 
   return (
     <>
@@ -49,6 +57,8 @@ export default async function CartPage() {
           freeShippingThreshold={freeShippingThreshold}
           standardDeliveryFee={standardDeliveryFee}
           couponsEnabled={couponsEnabled}
+          taxEnabled={taxEnabled}
+          taxPercentage={taxPercentage}
         />
         {featureBand && <FeatureBand features={featureBand.content.features} />}
       </main>

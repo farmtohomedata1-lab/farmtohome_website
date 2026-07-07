@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { header, navBar } from "@/content/homepage";
 import { useCartStore, selectCartTotalCount } from "@/lib/cartStore";
 import { useWishlistStore, selectWishlistCount } from "@/lib/wishlistStore";
 import { useHydrated } from "@/lib/useHydrated";
+import { signOutCustomer } from "@/lib/auth/actions";
 import type { CustomerHeaderInfo } from "@/lib/auth/getCustomerHeaderInfo";
 import AccountMenu from "./AccountMenu";
 import { fadeIn, buttonMotion } from "./motion";
@@ -96,6 +97,7 @@ export default function SiteHeaderClient({
   initialCustomerInfo: CustomerHeaderInfo | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isSigningOut, startSignOutTransition] = useTransition();
   const pathname = usePathname();
   const cartCount = useCartStore(selectCartTotalCount);
   const wishlistCount = useWishlistStore(selectWishlistCount);
@@ -209,6 +211,42 @@ export default function SiteHeaderClient({
                   </li>
                 );
               })}
+              {/* AccountMenu/the header's "Login" link are both desktop-only
+                  (hidden below md) — without this, mobile had no way to log
+                  in, view the account page, or sign out anywhere on the site. */}
+              <li className="mt-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm font-medium">
+                {customerInfo ? (
+                  <>
+                    <Link
+                      href="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="text-white/90 hover:text-white"
+                    >
+                      My Account
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={isSigningOut}
+                      onClick={() => {
+                        setCustomerInfo(null);
+                        setMenuOpen(false);
+                        startSignOutTransition(() => signOutCustomer());
+                      }}
+                      className="text-red-300 hover:text-red-200 disabled:opacity-60"
+                    >
+                      {isSigningOut ? "Signing out..." : "Sign Out"}
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="text-white/90 hover:text-white"
+                  >
+                    Login
+                  </Link>
+                )}
+              </li>
               <li className="mt-2 flex items-center gap-2 border-t border-white/10 pt-3 text-xs text-white/70">
                 <IconPin className="h-4 w-4" />
                 {navBar.delivery}

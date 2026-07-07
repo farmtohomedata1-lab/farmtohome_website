@@ -12,12 +12,17 @@ export async function updateSiteSettings(
     freeShippingThreshold: number;
     standardDeliveryFee: number;
     paynowQrImageUrl: string;
+    taxEnabled: boolean;
+    taxPercentage: number;
   }
 ): Promise<{ error?: string }> {
   const admin = await requireAuthedUser();
 
   if (values.freeShippingThreshold < 0 || values.standardDeliveryFee < 0) {
     return { error: "Values can't be negative." };
+  }
+  if (values.taxPercentage < 0) {
+    return { error: "Tax percentage can't be negative." };
   }
 
   try {
@@ -27,6 +32,8 @@ export async function updateSiteSettings(
         freeShippingThreshold: values.freeShippingThreshold,
         standardDeliveryFee: values.standardDeliveryFee,
         paynowQrImageUrl: values.paynowQrImageUrl.trim() || null,
+        taxEnabled: values.taxEnabled,
+        taxPercentage: values.taxPercentage,
       },
     });
   } catch (err) {
@@ -42,6 +49,8 @@ export async function updateSiteSettings(
     metadata: {
       freeShippingThreshold: values.freeShippingThreshold,
       standardDeliveryFee: values.standardDeliveryFee,
+      taxEnabled: values.taxEnabled,
+      taxPercentage: values.taxPercentage,
     },
   });
   // /checkout and /order-confirmation/[id] both read the authenticated

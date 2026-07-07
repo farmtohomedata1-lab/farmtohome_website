@@ -17,6 +17,9 @@ export interface ShopProduct {
   isOnSale: boolean;
   inStock: boolean;
   image: string | null;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 export default function ShopProductCard({ product }: { product: ShopProduct }) {
@@ -47,6 +50,9 @@ export default function ShopProductCard({ product }: { product: ShopProduct }) {
             isOnSale: product.isOnSale,
             inStock: product.inStock,
             image: product.image,
+            chargeShipping: product.chargeShipping,
+            taxable: product.taxable,
+            taxOverridePercent: product.taxOverridePercent,
           })
         }
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}

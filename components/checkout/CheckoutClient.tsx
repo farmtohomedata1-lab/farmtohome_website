@@ -47,11 +47,15 @@ export default function CheckoutClient({
   freeShippingThreshold,
   standardDeliveryFee,
   couponsEnabled,
+  taxEnabled,
+  taxPercentage,
 }: {
   addresses: CheckoutAddress[];
   freeShippingThreshold: number;
   standardDeliveryFee: number;
   couponsEnabled: boolean;
+  taxEnabled: boolean;
+  taxPercentage: number;
 }) {
   const router = useRouter();
   const items = useCartStore((state) => state.items);
@@ -85,7 +89,8 @@ export default function CheckoutClient({
     items,
     appliedCoupon,
     freeShippingThreshold,
-    standardDeliveryFee
+    standardDeliveryFee,
+    { taxEnabled, taxPercentage }
   );
 
   function handlePlaceOrder() {

@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import type { CartItem } from "@/lib/cartStore";
-import { IconClose } from "@/components/home/icons";
 
 export default function CartItemRow({
   item,
@@ -15,7 +16,14 @@ export default function CartItemRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 border-b border-gray-100 p-4 last:border-0 sm:flex-row sm:items-center sm:gap-3">
+    <motion.div
+      layout
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, x: -40 }}
+      transition={{ duration: 0.2 }}
+      className="flex flex-col gap-4 border-b border-gray-100 p-4 last:border-0 sm:flex-row sm:items-center sm:gap-3"
+    >
       <div className="flex flex-1 items-center gap-3">
         <button
           type="button"
@@ -23,7 +31,7 @@ export default function CartItemRow({
           aria-label={`Remove ${item.name}`}
           className="shrink-0 text-gray-400 hover:text-sale-red"
         >
-          <IconClose className="h-4 w-4" />
+          <Trash2 className="h-4 w-4" />
         </button>
         {item.image && (
           <Image
@@ -77,6 +85,6 @@ export default function CartItemRow({
           {formatPrice(item.price * item.quantity)}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

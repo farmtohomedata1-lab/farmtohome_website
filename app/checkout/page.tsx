@@ -11,7 +11,13 @@ export const metadata: Metadata = {
   title: "Checkout | Farm To Home",
 };
 
-const DEFAULT_SITE_SETTINGS = { freeShippingThreshold: 80, standardDeliveryFee: 5, couponsEnabled: true };
+const DEFAULT_SITE_SETTINGS = {
+  freeShippingThreshold: 80,
+  standardDeliveryFee: 5,
+  couponsEnabled: true,
+  taxEnabled: false,
+  taxPercentage: 9,
+};
 
 export default async function CheckoutPage() {
   // Every visitor here is guaranteed logged in — proxy.ts already redirects
@@ -32,6 +38,8 @@ export default async function CheckoutPage() {
   const standardDeliveryFee =
     settings?.standardDeliveryFee.toNumber() ?? DEFAULT_SITE_SETTINGS.standardDeliveryFee;
   const couponsEnabled = settings?.couponsEnabled ?? DEFAULT_SITE_SETTINGS.couponsEnabled;
+  const taxEnabled = settings?.taxEnabled ?? DEFAULT_SITE_SETTINGS.taxEnabled;
+  const taxPercentage = settings?.taxPercentage.toNumber() ?? DEFAULT_SITE_SETTINGS.taxPercentage;
 
   return (
     <>
@@ -54,6 +62,8 @@ export default async function CheckoutPage() {
           freeShippingThreshold={freeShippingThreshold}
           standardDeliveryFee={standardDeliveryFee}
           couponsEnabled={couponsEnabled}
+          taxEnabled={taxEnabled}
+          taxPercentage={taxPercentage}
         />
       </main>
       <Footer />

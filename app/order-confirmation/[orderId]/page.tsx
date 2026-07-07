@@ -88,6 +88,7 @@ export default async function OrderConfirmationPage({
                   discountAmount: order.discountAmount.toNumber(),
                   couponCode: order.couponCode,
                   shippingFee: order.shippingFee.toNumber(),
+                  taxAmount: order.taxAmount.toNumber(),
                   total: order.total.toNumber(),
                   paymentMethod: order.paymentMethod,
                   deliveryDate: order.deliveryDate ? order.deliveryDate.toISOString() : null,

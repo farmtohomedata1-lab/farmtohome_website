@@ -76,6 +76,12 @@ export interface NavBarContent {
   delivery: string;
 }
 
+export interface HeroCarouselImage {
+  id: string;
+  image: string;
+  imageAlt: string;
+}
+
 export interface HeroContent {
   eyebrow: string;
   heading: string;
@@ -85,6 +91,14 @@ export interface HeroContent {
   price: string;
   image: string;
   imageAlt: string;
+  // Absent/anything-but-"carousel" on existing (pre-this-feature) rows must
+  // mean "static" — that's what every hero row already in the database has,
+  // and it must keep rendering exactly as before with zero admin action.
+  heroStyle?: "static" | "carousel";
+  // Up to 5, admin-managed. 1-4 is fine (not required to be exactly 5); Hero
+  // itself falls back to the static banner if this is empty while
+  // heroStyle is "carousel" (see components/home/Hero.tsx).
+  carouselImages?: HeroCarouselImage[];
 }
 
 export interface Category {
@@ -206,6 +220,8 @@ export const hero: HeroContent = {
   price: "$80.99",
   image: img(photo.vegSpreadDark, 640, 440),
   imageAlt: "Fresh organic vegetables",
+  heroStyle: "static",
+  carouselImages: [],
 };
 
 const categoryImages: string[] = [

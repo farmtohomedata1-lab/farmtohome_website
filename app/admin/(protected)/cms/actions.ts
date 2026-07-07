@@ -1,6 +1,7 @@
 "use server";
 
 import * as Sentry from "@sentry/nextjs";
+import sharp from "sharp";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -108,12 +109,6 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 // this app is a photo (hero banners, products, team portraits) — all
 // naturally raster content.
 type SniffedImageType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
-const EXTENSION_FOR_TYPE: Record<SniffedImageType, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-};
 
 // Identifies the file from its actual leading bytes ("magic numbers"),
 // never from the browser-supplied `file.type` or the filename's extension —
@@ -189,14 +184,25 @@ export async function uploadSectionImage(
   }
 
   try {
+    // The client (a grocery shop owner with no technical staff, per
+    // CLAUDE.md) can't be expected to pre-resize/compress photos before
+    // uploading — every image gets normalized here instead of rejecting
+    // whatever they hand us. Resize is capped to this site's largest actual
+    // image slot (hero/gallery banners) and never upscales a smaller image;
+    // WebP is a modern, broadly-supported, efficient format regardless of
+    // what was uploaded. `animated: true` on the sharp() call preserves GIF
+    // animation frames in the output instead of collapsing them to one.
+    const processed = await sharp(buffer, { animated: sniffedType === "image/gif" })
+      .resize({ width: 1920, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+
     const admin = createAdminClient();
-    // Extension and Content-Type both come from the sniffed type, never
-    // from the client-supplied filename/MIME claim.
-    const path = `${crypto.randomUUID()}.${EXTENSION_FOR_TYPE[sniffedType]}`;
+    const path = `${crypto.randomUUID()}.webp`;
 
     const { error: uploadError } = await admin.storage
       .from(UPLOAD_BUCKET)
-      .upload(path, buffer, { contentType: sniffedType, upsert: false });
+      .upload(path, processed, { contentType: "image/webp", upsert: false });
 
     if (uploadError) {
       console.error("[cms] image upload failed:", uploadError);

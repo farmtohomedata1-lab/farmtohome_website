@@ -14,6 +14,9 @@ export interface CartItem {
   image: string | null;
   pack: string | null;
   quantity: number;
+  chargeShipping: boolean;
+  taxable: boolean;
+  taxOverridePercent: number | null;
 }
 
 interface CartState {
@@ -53,7 +56,34 @@ export const useCartStore = create<CartState>()(
         })),
       clearCart: () => set({ items: [] }),
     }),
-    { name: "cart-storage" }
+    {
+      name: "cart-storage",
+      // v1 added chargeShipping/taxable/taxOverridePercent. A cart persisted
+      // before that (version 0, or the pre-versioning `undefined`) has items
+      // missing those fields entirely — without this migration they'd read
+      // as `undefined`, which is falsy and would silently look like
+      // "shipping-exempt" and "not taxable" for every item already sitting
+      // in a returning customer's cart. Backfill the safe, pre-feature
+      // defaults (matches the Product schema's own @default values) so an
+      // old cart behaves exactly as it did before this feature existed,
+      // until the customer re-adds the item and gets real values.
+      version: 1,
+      migrate: (persisted) => {
+        const state = persisted as { items?: Partial<CartItem>[] };
+        const items: CartItem[] = (state.items ?? []).map((item) => ({
+          productId: item.productId!,
+          name: item.name!,
+          price: item.price!,
+          image: item.image ?? null,
+          pack: item.pack ?? null,
+          quantity: item.quantity!,
+          chargeShipping: item.chargeShipping ?? true,
+          taxable: item.taxable ?? true,
+          taxOverridePercent: item.taxOverridePercent ?? null,
+        }));
+        return { ...state, items };
+      },
+    }
   )
 );
 
