@@ -1,11 +1,11 @@
 "use server";
 
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/auth/adminAllowlist";
 import { checkLoginAllowed, recordFailedLogin } from "@/lib/auth/rateLimit";
 import { getClientIp } from "@/lib/auth/getClientIp";
-import { sendAdminPasswordResetRequestedEmail } from "@/lib/email/securityAlertEmail";
+import { sendAdminPasswordResetLinkEmail } from "@/lib/email/securityAlertEmail";
 
 export interface AdminForgotState {
   status?: "sent" | "error";
@@ -44,23 +44,38 @@ export async function requestAdminPasswordReset(
     lockoutMinutes: RESET_WINDOW_MINUTES,
   });
 
-  // Only a genuine admin email gets an alert AND an actual Supabase reset
-  // link. A non-admin email gets nothing sent — but the RESPONSE below is
-  // identical either way, so this endpoint never reveals whether the entered
-  // email is the real admin address (no enumeration oracle).
+  // Only a genuine admin email gets a real reset link emailed to it. A
+  // non-admin email gets nothing sent — but the RESPONSE below is identical
+  // either way, so this endpoint never reveals whether the entered email is
+  // the real admin address (no enumeration oracle).
+  //
+  // The recovery token is minted with the SERVICE-ROLE admin API
+  // (generateLink), NOT the anon resetPasswordForEmail(). This is deliberate
+  // and load-bearing: the anon /auth/v1/recover endpoint is gated by Supabase
+  // CAPTCHA protection and returns 400 `captcha_failed` without a captcha
+  // token (which this server action has no way to obtain) — the exact failure
+  // that broke this flow. The service-role admin API bypasses that gate. We
+  // then build the reset URL against OUR OWN confirm route and email it via
+  // OUR OWN Resend, so this flow depends on neither Supabase captcha, Supabase
+  // SMTP, nor the Supabase "Redirect URLs" allowlist.
   if (isAdminEmail(email)) {
-    // Fires on the REQUEST itself, before any reset can complete, so an
-    // attempted takeover is visible to the admin even if it ultimately fails.
-    await sendAdminPasswordResetRequestedEmail(email);
-
-    const headersList = await headers();
-    const origin = headersList.get("origin") ?? `https://${headersList.get("host")}`;
-    const supabase = await createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/admin/reset-password/confirm`,
-    });
-    if (error) {
-      console.error("[admin/forgot-password] resetPasswordForEmail failed:", error);
+    try {
+      const headersList = await headers();
+      const origin = headersList.get("origin") ?? `https://${headersList.get("host")}`;
+      const admin = createAdminClient();
+      const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
+      const tokenHash = data?.properties?.hashed_token;
+      if (error || !tokenHash) {
+        console.error("[admin/forgot-password] generateLink failed:", error);
+      } else {
+        // Our confirm route (app/admin/reset-password/confirm) verifies this
+        // token_hash via verifyOtp — which is NOT captcha-gated — then sets
+        // the admin recovery session and sends the admin to set a new password.
+        const resetUrl = `${origin}/admin/reset-password/confirm?token_hash=${tokenHash}&type=recovery`;
+        await sendAdminPasswordResetLinkEmail(email, resetUrl);
+      }
+    } catch (err) {
+      console.error("[admin/forgot-password] reset link generation threw:", err);
     }
   }
 

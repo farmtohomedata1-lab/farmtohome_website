@@ -23,34 +23,44 @@ function describeLockoutKind(key: string): string {
   return "login";
 }
 
-// Sent to the admin's OWN inbox the moment a password reset is REQUESTED for
-// their account — before the reset can complete — so an attempted takeover is
-// visible even if it never succeeds. Best-effort (never throws): a failed
-// notification must not break the reset request itself.
-export async function sendAdminPasswordResetRequestedEmail(adminEmail: string): Promise<void> {
+// Sent to the admin's OWN inbox when a password reset is requested — and it
+// carries the actual reset LINK. The link's token is minted by the
+// service-role admin API (lib/supabase/admin.ts's generateLink), NOT by the
+// anon resetPasswordForEmail() call, which is why this works even while
+// Supabase CAPTCHA protection is enabled (captcha only gates the public anon
+// endpoints; the service-role admin API bypasses it). Delivered via our own
+// Resend, so it also doesn't depend on Supabase's SMTP. Best-effort (never
+// throws): a failed send must not break the request handler.
+export async function sendAdminPasswordResetLinkEmail(
+  adminEmail: string,
+  resetUrl: string
+): Promise<void> {
   const client = getResendClient();
   if (!client) {
-    console.warn("[email] Skipping admin reset-requested alert — Resend not configured.");
+    console.warn("[email] Skipping admin reset-link email — Resend not configured.");
     return;
   }
   try {
     const { data, error } = await client.emails.send({
       from: EMAIL_FROM_ADDRESS,
       to: adminEmail,
-      subject: "Security alert: a password reset was requested for your admin account",
+      subject: "Reset your Farm To Home admin password",
       html: `
-        <p>A password reset was just <strong>requested</strong> for your Farm To Home admin account (${escapeHtml(adminEmail)}).</p>
-        <p>If this was you, follow the reset link in the separate email to finish. You'll get a second confirmation email once the password is actually changed.</p>
-        <p><strong>If this wasn't you</strong>, you can ignore this — no change has been made yet, and the reset link is required to change anything. Consider signing in and, if you're concerned, changing your password proactively.</p>
+        <p>A password reset was requested for your Farm To Home admin account (${escapeHtml(adminEmail)}).</p>
+        <p style="margin:20px 0">
+          <a href="${escapeHtml(resetUrl)}" style="background:#629d23;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">Set a new password</a>
+        </p>
+        <p>Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(resetUrl)}</span></p>
+        <p style="color:#555;font-size:13px">This link is single-use and expires shortly. <strong>If you didn't request this</strong>, you can safely ignore this email — your password will not change unless you open the link and set a new one. You'll also get a separate confirmation email if a change actually goes through.</p>
       `,
     });
     if (error) {
-      console.error("[email] sendAdminPasswordResetRequestedEmail rejected by Resend:", JSON.stringify(error));
+      console.error("[email] sendAdminPasswordResetLinkEmail rejected by Resend:", JSON.stringify(error));
       return;
     }
-    console.log(`[email] sendAdminPasswordResetRequestedEmail sent, Resend id=${data?.id}`);
+    console.log(`[email] sendAdminPasswordResetLinkEmail sent, Resend id=${data?.id}`);
   } catch (err) {
-    console.error("[email] sendAdminPasswordResetRequestedEmail threw:", err);
+    console.error("[email] sendAdminPasswordResetLinkEmail threw:", err);
   }
 }
 
