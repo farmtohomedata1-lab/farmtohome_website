@@ -1,27 +1,23 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
 import { signIn, type LoginState } from "./actions";
-import TurnstileWidget from "@/components/common/TurnstileWidget";
 
 const initialState: LoginState = {};
 
+// Turnstile/CAPTCHA is deliberately NOT rendered here right now — Supabase
+// Attack Protection (CAPTCHA) is turned OFF for this project, and brute-force
+// protection is instead handled by the app's own DB-backed rate limiter
+// (lib/auth/rateLimit.ts: 5 failed attempts / 15-minute lockout, already
+// proven working). signIn() still accepts an optional turnstileToken field
+// so Turnstile can be reintroduced later as a widget here without any server
+// changes — see app/admin/login/actions.ts.
 export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(signIn, initialState);
-  const [turnstileToken, setTurnstileToken] = useState("");
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      {/*
-        Same Cloudflare Turnstile token the customer login form sends
-        (components/common/TurnstileWidget). Required because this project's
-        Supabase project has CAPTCHA protection enabled — signInWithPassword
-        is rejected server-side without a valid token. Renders nothing (and
-        sends an empty token) until NEXT_PUBLIC_TURNSTILE_SITE_KEY is set, so
-        this is inert until Turnstile is configured.
-      */}
-      <input type="hidden" name="turnstileToken" value={turnstileToken} />
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
           Email
@@ -63,8 +59,6 @@ export default function LoginForm() {
           Forgot password?
         </Link>
       </div>
-
-      <TurnstileWidget onVerify={setTurnstileToken} />
 
       <button
         type="submit"

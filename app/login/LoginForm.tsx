@@ -4,17 +4,23 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import type { FormEvent } from "react";
 import { continueWithPassword, type LoginState } from "./actions";
-import TurnstileWidget from "@/components/common/TurnstileWidget";
 
 const initialState: LoginState = {};
 
+// Turnstile/CAPTCHA is deliberately NOT rendered here right now — Supabase
+// Attack Protection (CAPTCHA) is turned OFF for this project, and brute-force
+// protection is instead handled by the app's own DB-backed rate limiter
+// (lib/auth/rateLimit.ts: 5 failed attempts / 15-minute lockout for login, 5
+// accounts / 15 minutes per IP for signup — both already proven working).
+// continueWithPassword() still accepts an optional turnstileToken field so
+// Turnstile can be reintroduced later as a widget here without server
+// changes — see app/login/actions.ts.
 export default function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [state, formAction, isPending] = useActionState(continueWithPassword, initialState);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mismatchError, setMismatchError] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState("");
 
   // The server only knows an account is missing for the exact email it just
   // checked — if the visitor edits the email afterward, drop back to the
@@ -35,7 +41,6 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
   return (
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-4">
       <input type="hidden" name="redirectTo" value={redirectTo} />
-      <input type="hidden" name="turnstileToken" value={turnstileToken} />
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
           Email
@@ -105,8 +110,6 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
           </Link>
         </div>
       )}
-
-      <TurnstileWidget onVerify={setTurnstileToken} />
 
       {(mismatchError || state.error) && (
         <p role="alert" className="text-sm text-red-600">
