@@ -36,7 +36,17 @@ export async function checkLoginAllowed(email: string): Promise<LoginGate> {
   }
 }
 
-export async function recordFailedLogin(email: string): Promise<void> {
+// opts lets a caller tighten the gate for a more sensitive endpoint (e.g. the
+// admin password-reset request, which uses 3 attempts / 60 minutes) while
+// still sharing this one table + prefix convention rather than standing up a
+// second rate-limiting system. Defaults preserve the original 5 / 15-minute
+// behaviour for every existing caller unchanged.
+export async function recordFailedLogin(
+  email: string,
+  opts?: { maxAttempts?: number; lockoutMinutes?: number }
+): Promise<void> {
+  const maxAttempts = opts?.maxAttempts ?? MAX_ATTEMPTS;
+  const lockoutMinutes = opts?.lockoutMinutes ?? LOCKOUT_MINUTES;
   try {
     const existing = await prisma.loginAttempt.findUnique({ where: { email } });
     const failedCount = (existing?.failedCount ?? 0) + 1;
@@ -45,10 +55,10 @@ export async function recordFailedLogin(email: string): Promise<void> {
     // here anyway, since checkLoginAllowed blocks the attempt before the
     // caller ever gets to record a new failure. This is what keeps the alert
     // to one email per lockout instead of one per blocked retry.
-    const justLockedOut = !existing?.lockedUntil && failedCount >= MAX_ATTEMPTS;
+    const justLockedOut = !existing?.lockedUntil && failedCount >= maxAttempts;
     const lockedUntil =
-      failedCount >= MAX_ATTEMPTS
-        ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000)
+      failedCount >= maxAttempts
+        ? new Date(Date.now() + lockoutMinutes * 60_000)
         : null;
 
     await prisma.loginAttempt.upsert({

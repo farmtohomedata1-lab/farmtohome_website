@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SECURE_COOKIE_OPTIONS } from "@/lib/supabase/cookieOptions";
+import { isAdminEmail } from "@/lib/auth/adminAllowlist";
 
 const LAST_ACTIVE_COOKIE = "admin_last_active";
 const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -42,9 +43,25 @@ async function handleAdminRoute(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  // A valid session is not enough to be an admin: customer accounts live in
+  // this same Supabase project, so gate on the admin allowlist too. Treating a
+  // signed-in-but-not-allowlisted user as "not an admin" here (rather than as
+  // `user`) is also what prevents a redirect loop — otherwise such a user
+  // would be bounced from /admin/login to /admin/cms by this middleware and
+  // straight back to /admin/login by the protected layout's own re-check.
+  const isAdmin = !!user && isAdminEmail(user.email);
 
-  if (user) {
+  const pathname = request.nextUrl.pathname;
+  const isLoginPage = pathname === "/admin/login";
+  // Admin auth pages a signed-OUT admin must be able to reach without being
+  // bounced to /admin/login: the login page itself, plus the forgot/reset
+  // password flow (/admin/forgot-password and /admin/reset-password[/confirm]).
+  const isPublicAdminPath =
+    isLoginPage ||
+    pathname === "/admin/forgot-password" ||
+    pathname.startsWith("/admin/reset-password");
+
+  if (isAdmin) {
     const lastActiveRaw = request.cookies.get(LAST_ACTIVE_COOKIE)?.value;
     const lastActive = lastActiveRaw ? Number(lastActiveRaw) : null;
     const inactiveTooLong =
@@ -66,6 +83,10 @@ async function handleAdminRoute(request: NextRequest) {
       path: "/",
     });
 
+    // Only bounce an already-signed-in admin away from the login page — never
+    // away from /admin/reset-password, or they could never finish a password
+    // reset (the confirm step establishes a recovery session first, which
+    // makes them "signed in" while they're still on the reset page).
     if (isLoginPage) {
       return NextResponse.redirect(new URL("/admin/cms", request.url));
     }
@@ -73,7 +94,7 @@ async function handleAdminRoute(request: NextRequest) {
     return response;
   }
 
-  if (!isLoginPage) {
+  if (!isPublicAdminPath) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 

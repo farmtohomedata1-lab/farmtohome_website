@@ -10,6 +10,7 @@ import { escapeHtml } from "./escapeHtml";
 function describeLockoutTarget(key: string): string {
   if (key.startsWith("signup:")) return `signup attempts from IP ${key.slice("signup:".length)}`;
   if (key.startsWith("coupon:")) return `coupon-code attempts from IP ${key.slice("coupon:".length)}`;
+  if (key.startsWith("admin-reset:")) return `admin password-reset requests from IP ${key.slice("admin-reset:".length)}`;
   if (key.startsWith("admin:")) return `admin login attempts for ${key.slice("admin:".length)}`;
   return `login attempts for ${key}`;
 }
@@ -17,8 +18,69 @@ function describeLockoutTarget(key: string): string {
 function describeLockoutKind(key: string): string {
   if (key.startsWith("signup:")) return "signup";
   if (key.startsWith("coupon:")) return "coupon";
+  if (key.startsWith("admin-reset:")) return "admin password-reset";
   if (key.startsWith("admin:")) return "admin login";
   return "login";
+}
+
+// Sent to the admin's OWN inbox the moment a password reset is REQUESTED for
+// their account — before the reset can complete — so an attempted takeover is
+// visible even if it never succeeds. Best-effort (never throws): a failed
+// notification must not break the reset request itself.
+export async function sendAdminPasswordResetRequestedEmail(adminEmail: string): Promise<void> {
+  const client = getResendClient();
+  if (!client) {
+    console.warn("[email] Skipping admin reset-requested alert — Resend not configured.");
+    return;
+  }
+  try {
+    const { data, error } = await client.emails.send({
+      from: EMAIL_FROM_ADDRESS,
+      to: adminEmail,
+      subject: "Security alert: a password reset was requested for your admin account",
+      html: `
+        <p>A password reset was just <strong>requested</strong> for your Farm To Home admin account (${escapeHtml(adminEmail)}).</p>
+        <p>If this was you, follow the reset link in the separate email to finish. You'll get a second confirmation email once the password is actually changed.</p>
+        <p><strong>If this wasn't you</strong>, you can ignore this — no change has been made yet, and the reset link is required to change anything. Consider signing in and, if you're concerned, changing your password proactively.</p>
+      `,
+    });
+    if (error) {
+      console.error("[email] sendAdminPasswordResetRequestedEmail rejected by Resend:", JSON.stringify(error));
+      return;
+    }
+    console.log(`[email] sendAdminPasswordResetRequestedEmail sent, Resend id=${data?.id}`);
+  } catch (err) {
+    console.error("[email] sendAdminPasswordResetRequestedEmail threw:", err);
+  }
+}
+
+// Sent to the admin's OWN inbox once the password has ACTUALLY been changed —
+// the second, distinct signal so a real admin can tell "someone tried" (the
+// requested email above) apart from "someone succeeded" (this one).
+export async function sendAdminPasswordResetCompletedEmail(adminEmail: string): Promise<void> {
+  const client = getResendClient();
+  if (!client) {
+    console.warn("[email] Skipping admin reset-completed alert — Resend not configured.");
+    return;
+  }
+  try {
+    const { data, error } = await client.emails.send({
+      from: EMAIL_FROM_ADDRESS,
+      to: adminEmail,
+      subject: "Security alert: your admin account password was just changed",
+      html: `
+        <p>The password for your Farm To Home admin account (${escapeHtml(adminEmail)}) was just <strong>changed successfully</strong>.</p>
+        <p>If this was you, no action is needed. <strong>If this wasn't you</strong>, your admin account may be compromised — request a new reset immediately to lock whoever did this out, and review recent activity in the admin activity log.</p>
+      `,
+    });
+    if (error) {
+      console.error("[email] sendAdminPasswordResetCompletedEmail rejected by Resend:", JSON.stringify(error));
+      return;
+    }
+    console.log(`[email] sendAdminPasswordResetCompletedEmail sent, Resend id=${data?.id}`);
+  } catch (err) {
+    console.error("[email] sendAdminPasswordResetCompletedEmail threw:", err);
+  }
 }
 
 // Fired exactly once per lockout (see the justLockedOut check in

@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ expired?: string }>;
+  searchParams: Promise<{ expired?: string; reset?: string }>;
 }) {
-  const { expired } = await searchParams;
+  const { expired, reset } = await searchParams;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
@@ -21,6 +21,12 @@ export default async function AdminLoginPage({
         {expired && (
           <p className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Your session expired due to inactivity. Please sign in again.
+          </p>
+        )}
+
+        {reset && (
+          <p className="mt-4 rounded-md bg-brand-green/10 px-3 py-2 text-sm text-dark-green">
+            Your password has been updated. Please sign in with your new password.
           </p>
         )}
 

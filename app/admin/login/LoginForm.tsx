@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { signIn, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -42,6 +43,15 @@ export default function LoginForm() {
           {state.error}
         </p>
       )}
+
+      <div className="-mt-1 text-right">
+        <Link
+          href="/admin/forgot-password"
+          className="text-xs font-semibold text-brand-green hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
 
       <button
         type="submit"

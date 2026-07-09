@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminEmail } from "@/lib/auth/adminAllowlist";
 import { checkLoginAllowed, clearLoginAttempts, recordFailedLogin } from "@/lib/auth/rateLimit";
 
 export interface LoginState {
@@ -36,9 +37,21 @@ export async function signIn(_prevState: LoginState, formData: FormData): Promis
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
+  if (error || !data.user) {
+    await recordFailedLogin(rateLimitKey);
+    return { error: "Invalid email or password." };
+  }
+
+  // Authentication succeeded, but that only proves this is a real Supabase
+  // user — and customers are real Supabase users in this same project. Reject
+  // anyone not on the admin allowlist, clearing the session cookie that
+  // signInWithPassword just set. Same generic error and a recorded failed
+  // attempt as a wrong password, so a customer can't distinguish "valid
+  // credentials but not an admin" from "wrong password" here.
+  if (!isAdminEmail(data.user.email)) {
+    await supabase.auth.signOut();
     await recordFailedLogin(rateLimitKey);
     return { error: "Invalid email or password." };
   }
