@@ -42,5 +42,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local product-image source + catalog import data (not app code — kept out of
+# the repo to avoid bloating it; ExtractedProductImages is ~58MB)
+/ExtractedProductImages
+/farm-to-home-real-catalog.csv
+
 # prisma generated client (regenerated via `prisma generate`)
 /lib/generated/prisma

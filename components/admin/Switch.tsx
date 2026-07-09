@@ -17,19 +17,24 @@ export default function Switch({
       <span className="text-xs font-medium text-gray-500">
         {checked ? "Enabled" : "Disabled"}
       </span>
+      {/*
+        Same flex + padding + translate-x-full knob as
+        components/admin/ToggleField.tsx, so both admin toggles stay perfectly
+        symmetric in ON and OFF without any per-size magic-number offsets.
+      */}
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         disabled={disabled}
         onClick={onChange}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
+        className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors disabled:opacity-60 ${
           checked ? "bg-brand-green" : "bg-gray-300"
         }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-[22px]" : "translate-x-0.5"
+          className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-full" : "translate-x-0"
           }`}
         />
       </button>
