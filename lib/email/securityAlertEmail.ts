@@ -11,6 +11,7 @@ function describeLockoutTarget(key: string): string {
   if (key.startsWith("signup:")) return `signup attempts from IP ${key.slice("signup:".length)}`;
   if (key.startsWith("coupon:")) return `coupon-code attempts from IP ${key.slice("coupon:".length)}`;
   if (key.startsWith("admin-reset:")) return `admin password-reset requests from IP ${key.slice("admin-reset:".length)}`;
+  if (key.startsWith("customer-reset:")) return `customer password-reset requests from IP ${key.slice("customer-reset:".length)}`;
   if (key.startsWith("admin:")) return `admin login attempts for ${key.slice("admin:".length)}`;
   return `login attempts for ${key}`;
 }
@@ -19,6 +20,7 @@ function describeLockoutKind(key: string): string {
   if (key.startsWith("signup:")) return "signup";
   if (key.startsWith("coupon:")) return "coupon";
   if (key.startsWith("admin-reset:")) return "admin password-reset";
+  if (key.startsWith("customer-reset:")) return "customer password-reset";
   if (key.startsWith("admin:")) return "admin login";
   return "login";
 }
@@ -90,6 +92,43 @@ export async function sendAdminPasswordResetCompletedEmail(adminEmail: string): 
     console.log(`[email] sendAdminPasswordResetCompletedEmail sent, Resend id=${data?.id}`);
   } catch (err) {
     console.error("[email] sendAdminPasswordResetCompletedEmail threw:", err);
+  }
+}
+
+// Customer-facing password reset link, same service-role + own-Resend delivery
+// as the admin flow (sendAdminPasswordResetLinkEmail) — deliberately not the
+// captcha-gated anon resetPasswordForEmail. Sent to the customer's own email;
+// best-effort (never throws).
+export async function sendCustomerPasswordResetLinkEmail(
+  customerEmail: string,
+  resetUrl: string
+): Promise<void> {
+  const client = getResendClient();
+  if (!client) {
+    console.warn("[email] Skipping customer reset-link email — Resend not configured.");
+    return;
+  }
+  try {
+    const { data, error } = await client.emails.send({
+      from: EMAIL_FROM_ADDRESS,
+      to: customerEmail,
+      subject: "Reset your Farm To Home password",
+      html: `
+        <p>We received a request to reset the password for your Farm To Home account.</p>
+        <p style="margin:20px 0">
+          <a href="${escapeHtml(resetUrl)}" style="background:#629d23;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">Set a new password</a>
+        </p>
+        <p>Or paste this link into your browser:<br><span style="word-break:break-all">${escapeHtml(resetUrl)}</span></p>
+        <p style="color:#555;font-size:13px">This link is single-use and expires shortly. If you didn't request this, you can safely ignore this email — your password won't change unless you open the link and set a new one.</p>
+      `,
+    });
+    if (error) {
+      console.error("[email] sendCustomerPasswordResetLinkEmail rejected by Resend:", JSON.stringify(error));
+      return;
+    }
+    console.log(`[email] sendCustomerPasswordResetLinkEmail sent, Resend id=${data?.id}`);
+  } catch (err) {
+    console.error("[email] sendCustomerPasswordResetLinkEmail threw:", err);
   }
 }
 

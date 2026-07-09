@@ -87,11 +87,10 @@ export async function continueWithPassword(
   }
 
   const supabase = await createCustomerClient();
-  // The CAPTCHA token (when present) is only ever passed to this first,
-  // externally-triggered attempt — Turnstile tokens are single-use, and the
-  // "secondSignIn" below (after account creation) is an internal follow-up
-  // to this same already-verified request, not a fresh bot-exposed entry
-  // point, so it deliberately doesn't get a (now-consumed) token.
+  // The CAPTCHA token (when present) is passed to this first,
+  // externally-triggered sign-in attempt. Turnstile tokens are single-use, so
+  // the post-account-creation sign-in further below can't reuse it — it uses a
+  // service-role magic-link instead (see there).
   const signInResult = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -169,9 +168,26 @@ export async function continueWithPassword(
   }
   await recordFailedLogin(signupKey);
 
-  const secondSignIn = await supabase.auth.signInWithPassword({ email, password });
+  // Establish the session WITHOUT a second CAPTCHA token. The Turnstile token
+  // from this submit was already consumed by the first signInWithPassword
+  // attempt above (Supabase verifies the token before checking credentials,
+  // and tokens are single-use), so a plain password sign-in here would be
+  // rejected by CAPTCHA. Instead mint a one-time magic-link token with the
+  // service-role admin client (admin API bypasses CAPTCHA) and verify it on
+  // the customer client — verifyOtp is not CAPTCHA-gated — which writes the
+  // customer session cookie exactly like a password sign-in would.
+  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  const tokenHash = linkData?.properties?.hashed_token;
+  if (linkError || !tokenHash) {
+    console.error("[login] post-signup generateLink failed:", linkError);
+    return { error: "Account created, but sign-in failed. Please try logging in again." };
+  }
+  const secondSignIn = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "magiclink" });
   if (!secondSignIn.data.user) {
-    console.error("[login] post-signup sign-in failed:", secondSignIn.error);
+    console.error("[login] post-signup verifyOtp failed:", secondSignIn.error);
     return { error: "Account created, but sign-in failed. Please try logging in again." };
   }
 

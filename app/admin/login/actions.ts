@@ -12,6 +12,11 @@ export interface LoginState {
 export async function signIn(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
+  // Cloudflare Turnstile token from the login form. Only ever non-empty once
+  // NEXT_PUBLIC_TURNSTILE_SITE_KEY is configured (the widget renders nothing
+  // otherwise), and Supabase only enforces it when CAPTCHA protection is
+  // enabled in the dashboard — so this stays inert until both are wired.
+  const turnstileToken = String(formData.get("turnstileToken") || "");
 
   if (!email || !password) {
     return { error: "Enter your email and password." };
@@ -37,7 +42,11 @@ export async function signIn(_prevState: LoginState, formData: FormData): Promis
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: turnstileToken ? { captchaToken: turnstileToken } : undefined,
+  });
 
   if (error || !data.user) {
     await recordFailedLogin(rateLimitKey);
