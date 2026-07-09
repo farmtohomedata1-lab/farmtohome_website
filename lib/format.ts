@@ -2,7 +2,7 @@
 // on the site (homepage sections, admin lists, /shop) renders identically.
 
 export function formatPrice(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+  return `S$${amount.toFixed(2)}`;
 }
 
 // Every customer/order-facing date is shown in Singapore local time,

@@ -1,6 +1,6 @@
 import "server-only";
 import { getResendClient } from "./resend";
-import { EMAIL_FROM_ADDRESS, SHOP_ALERT_EMAIL } from "./config";
+import { EMAIL_FROM_ADDRESS, CONTACT_NOTIFY_EMAILS } from "./config";
 import { escapeHtml } from "./escapeHtml";
 
 export interface ContactSubmission {
@@ -15,8 +15,8 @@ export async function sendContactMessageEmail(
 ): Promise<{ error?: string }> {
   const client = getResendClient();
   if (!client) return { error: "Email is not configured. Please try again later." };
-  if (!SHOP_ALERT_EMAIL) {
-    console.warn("[email] ORDER_ALERT_EMAIL is not set — skipping contact form email.");
+  if (CONTACT_NOTIFY_EMAILS.length === 0) {
+    console.warn("[email] CONTACT_NOTIFY_EMAILS is not set — skipping contact form email.");
     return { error: "Email is not configured. Please try again later." };
   }
 
@@ -25,7 +25,7 @@ export async function sendContactMessageEmail(
   try {
     const { data, error } = await client.emails.send({
       from: EMAIL_FROM_ADDRESS,
-      to: SHOP_ALERT_EMAIL,
+      to: CONTACT_NOTIFY_EMAILS,
       replyTo: email,
       subject: `New Contact Form Message from ${name}`,
       html: `

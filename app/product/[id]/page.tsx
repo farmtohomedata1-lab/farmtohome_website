@@ -10,6 +10,13 @@ import CartQuantityControl from "@/components/product/CartQuantityControl";
 import PriceDisplay from "@/components/product/PriceDisplay";
 import { prisma } from "@/lib/prisma";
 import { computeDiscountPercent } from "@/lib/pricing";
+import { absoluteUrl } from "@/lib/siteUrl";
+import {
+  buildProductAltText,
+  buildProductMetaDescription,
+  buildProductMetaTitle,
+  buildProductStructuredData,
+} from "@/lib/seo/productSeo";
 
 // Wrapped in React's cache() so generateMetadata and the page body — which
 // both need this same product — share one DB round trip per request instead
@@ -29,8 +36,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const product = await getProduct(id);
+  if (!product) {
+    return { title: "Product | Farm To Home" };
+  }
   return {
-    title: product ? `${product.name} | Farm To Home` : "Product | Farm To Home",
+    title: buildProductMetaTitle(product.name),
+    description: buildProductMetaDescription(product.name, product.category?.name ?? null),
+    alternates: { canonical: absoluteUrl(`/product/${product.id}`) },
   };
 }
 
@@ -49,9 +61,24 @@ export default async function ProductDetailPage({
     product.isOnSale && compareAtPrice != null
       ? computeDiscountPercent(price, compareAtPrice)
       : null;
+  const categoryName = product.category?.name ?? null;
+  const imageAlt = buildProductAltText(product.name, categoryName);
+  const structuredData = buildProductStructuredData({
+    name: product.name,
+    description: product.detailedDescription,
+    imageUrl: absoluteUrl(product.image ?? "/product-placeholder.webp"),
+    price,
+    inStock: product.inStock,
+    url: absoluteUrl(`/product/${product.id}`),
+    categoryName,
+  });
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <SiteHeader />
       <NavBar />
       <main>
@@ -74,7 +101,7 @@ export default async function ProductDetailPage({
             {product.image ? (
               <Image
                 src={product.image}
-                alt={product.name}
+                alt={imageAlt}
                 width={320}
                 height={320}
                 className="h-64 w-64 object-contain sm:h-80 sm:w-80"

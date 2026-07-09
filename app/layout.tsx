@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SITE_URL } from "@/lib/siteUrl";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Farm To Home | Fresh Groceries Delivered To Your Doorstep",
   description:
     "Farm To Home — Singapore's online organic grocery store. Fresh vegetables, fruits and daily essentials delivered fast, with cash on delivery.",

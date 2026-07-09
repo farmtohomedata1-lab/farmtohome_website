@@ -7,3 +7,12 @@ import "server-only";
 export const EMAIL_FROM_ADDRESS =
   process.env.ORDER_EMAIL_FROM || "Farm To Home <onboarding@resend.dev>";
 export const SHOP_ALERT_EMAIL = process.env.ORDER_ALERT_EMAIL;
+
+// Where contact-form submissions are sent — deliberately separate from
+// ORDER_ALERT_EMAIL (order alerts and contact messages can go to different
+// inboxes/people). Comma-separated so more recipients can be added later
+// without a code change.
+export const CONTACT_NOTIFY_EMAILS = (process.env.CONTACT_NOTIFY_EMAILS || "")
+  .split(",")
+  .map((email) => email.trim())
+  .filter(Boolean);
