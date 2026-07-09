@@ -5,6 +5,7 @@ import { computeDiscount, computeSubtotal } from "@/lib/cartTotals";
 import { checkCoupon, resolveLineItems, type PricedItem } from "@/lib/orderPricing";
 import { checkLoginAllowed, clearLoginAttempts, recordFailedLogin } from "@/lib/auth/rateLimit";
 import { getClientIp } from "@/lib/auth/getClientIp";
+import { couponCodeSchema, pricedItemsSchema } from "@/lib/checkout/schemas";
 
 export interface ValidateCouponResult {
   valid: boolean;
@@ -30,6 +31,18 @@ export async function validateCoupon(
   code: string,
   items: PricedItem[]
 ): Promise<ValidateCouponResult> {
+  // This endpoint has no auth of its own (guest cart/checkout preview) and is
+  // reachable directly by a tampered request, so runtime-validate before
+  // touching either argument — same negative/oversized-quantity vector
+  // placeOrder guards against (lib/checkout/schemas.ts), applied here too
+  // since resolveLineItems/computeSubtotal below have no bounds-checking of
+  // their own.
+  const parsedCode = couponCodeSchema.safeParse(code);
+  const parsedItems = pricedItemsSchema.safeParse(items);
+  if (!parsedCode.success || !parsedItems.success) {
+    return { valid: false, error: "Invalid request.", subtotal: 0, discount: 0 };
+  }
+
   const lineItems = await resolveLineItems(items);
   const subtotal = computeSubtotal(lineItems);
 

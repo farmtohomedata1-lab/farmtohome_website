@@ -9,6 +9,7 @@ import { sendOrderAlertEmail, sendOrderConfirmationEmail } from "@/lib/email/ord
 import { checkLoginAllowed, clearLoginAttempts, recordFailedLogin } from "@/lib/auth/rateLimit";
 import { getClientIp } from "@/lib/auth/getClientIp";
 import { getStripeClient } from "@/lib/stripe/server";
+import { orderIdSchema, placeOrderInputSchema } from "@/lib/checkout/schemas";
 
 export interface PlaceOrderAddressInput {
   addressId?: string;
@@ -54,11 +55,18 @@ function toStripeCents(dollars: number): number {
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const customer = await requireAuthedCustomer("/checkout");
 
-  if (!input.items || input.items.length === 0) {
-    return { error: "Your cart is empty." };
-  }
-  if (input.paymentMethod !== "PAYNOW_MANUAL" && input.paymentMethod !== "STRIPE") {
-    return { error: "Select a valid payment method." };
+  // Runtime-validate the ENTIRE payload before touching it -- the real
+  // boundary against a tampered request (dev-tools, curl, a patched client
+  // bundle) that bypasses the UI entirely. In particular this rejects a
+  // non-integer/negative/oversized quantity: resolveLineItems and
+  // computeCartTotals below do no clamping of their own (by design, they
+  // trust their caller), and an unvalidated negative quantity was confirmed
+  // exploitable -- mixed with a legitimate item, it can drive an order's
+  // total below zero. See lib/checkout/schemas.ts for the full schema.
+  const parsed = placeOrderInputSchema.safeParse(input);
+  if (!parsed.success) {
+    console.warn("[checkout] placeOrder rejected invalid input:", parsed.error.flatten());
+    return { error: "Invalid order data. Please refresh the page and try again." };
   }
 
   const lineItems = await resolveLineItems(input.items);
@@ -294,6 +302,9 @@ export interface RetryStripePaymentResult {
 export async function retryStripePayment(orderId: string): Promise<RetryStripePaymentResult> {
   const customer = await requireAuthedCustomer("/account");
 
+  if (!orderIdSchema.safeParse(orderId).success) {
+    return { error: "Order not found." };
+  }
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.customerId !== customer.id) {
     return { error: "Order not found." };
@@ -320,6 +331,9 @@ export interface OrderPaymentStatusResult {
 export async function getOrderPaymentStatus(orderId: string): Promise<OrderPaymentStatusResult> {
   const customer = await requireAuthedCustomer("/account");
 
+  if (!orderIdSchema.safeParse(orderId).success) {
+    return { error: "Order not found." };
+  }
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.customerId !== customer.id) {
     return { error: "Order not found." };
@@ -335,6 +349,9 @@ export async function getOrderPaymentStatus(orderId: string): Promise<OrderPayme
 export async function declarePaymentMade(orderId: string): Promise<{ error?: string }> {
   const customer = await requireAuthedCustomer("/account");
 
+  if (!orderIdSchema.safeParse(orderId).success) {
+    return { error: "Order not found." };
+  }
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.customerId !== customer.id) {
     return { error: "Order not found." };
