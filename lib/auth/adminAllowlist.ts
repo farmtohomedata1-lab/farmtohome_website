@@ -43,7 +43,12 @@ function parseAdminEmails(): Set<string> {
   return new Set(
     (process.env.ADMIN_EMAILS ?? "")
       .split(",")
-      .map((email) => email.trim().toLowerCase())
+      // Strip surrounding quotes defensively. A .env file has them stripped
+      // automatically, but a value pasted WITH quotes into the Vercel
+      // dashboard (e.g. 'owner@site.com') keeps them literally — which would
+      // otherwise silently fail every match and lock the admin out. Trim,
+      // de-quote, trim again, then lowercase.
+      .map((email) => email.trim().replace(/^['"]+|['"]+$/g, "").trim().toLowerCase())
       .filter(Boolean)
   );
 }

@@ -44,6 +44,15 @@ test("isAdminEmail: is case- and whitespace-insensitive", () => {
   assert.equal(isAdminEmail("OWNER@FARMTOHOME.SG"), true);
 });
 
+test("isAdminEmail: tolerates a value pasted WITH quotes (Vercel dashboard trap)", () => {
+  // A .env strips quotes; the Vercel dashboard does not. Both must work so a
+  // quoted value can never silently lock the admin out.
+  process.env.ADMIN_EMAILS = "'farmtohomedata1@gmail.com'";
+  assert.equal(isAdminEmail("farmtohomedata1@gmail.com"), true);
+  process.env.ADMIN_EMAILS = '"farmtohomedata1@gmail.com"';
+  assert.equal(isAdminEmail("farmtohomedata1@gmail.com"), true);
+});
+
 test("isAdminEmail: supports multiple comma-separated admins", () => {
   process.env.ADMIN_EMAILS = "a@shop.sg, b@shop.sg";
   assert.equal(isAdminEmail("a@shop.sg"), true);
