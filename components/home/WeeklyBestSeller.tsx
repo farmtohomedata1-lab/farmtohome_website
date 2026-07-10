@@ -26,7 +26,7 @@ export default function WeeklyBestSeller({
             href="/shop"
             className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
           >
-            Shop All Products
+            Shop All Productss
           </Link>
         </div>
         <motion.ul
