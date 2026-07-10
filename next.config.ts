@@ -62,6 +62,30 @@ const cspDirectives = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // sharp (used by app/admin/(protected)/cms/actions.ts's uploadSectionImage,
+  // shared by every admin image upload including product photos) ships a
+  // native binary per platform/arch (@img/sharp-<platform>-<arch>). Without
+  // this, Next's default serverless file-tracing — which works by statically
+  // analyzing import/require calls — can fail to include sharp's actual
+  // compiled binary in the deployed function bundle, because sharp resolves
+  // its own native addon dynamically at runtime rather than via a plain,
+  // traceable require(). The failure mode this produces is exact and was
+  // confirmed via real Vercel function logs: "Failed to load external module
+  // sharp-<hash>: Could not load the 'sharp' module using the linux-x64
+  // runtime, ERR_DLOPEN_FAILED: libvips-cpp.so... cannot open shared object
+  // file" — thrown the instant any file importing sharp is loaded (so it hit
+  // every action bundled into the same serverless function as
+  // uploadSectionImage, including unrelated ones like createProduct, not
+  // just image-upload requests specifically). Listing it here tells Next to
+  // leave sharp as an untouched, external require() and copy its full
+  // node_modules folder (binaries included) into the function output as-is,
+  // instead of attempting to trace/bundle it. This is Next's own documented
+  // fix for exactly this class of native-binary-package issue, and is
+  // structurally impossible to catch via local `next build && next start`
+  // testing on a non-Linux dev machine, since the local machine's own
+  // correctly-installed binary for ITS platform never exercises this
+  // tracing gap at all — only Vercel's real linux-x64 deploy does.
+  serverExternalPackages: ["sharp"],
   experimental: {
     // Server Actions default to a 1MB request body limit, independent of any
     // app-level file-size check (see MAX_UPLOAD_BYTES in
