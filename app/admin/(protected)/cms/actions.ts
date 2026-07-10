@@ -1,13 +1,13 @@
 "use server";
 
 import * as Sentry from "@sentry/nextjs";
-import sharp from "sharp";
 import { revalidatePath } from "@/lib/cache/safeRevalidate";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction } from "@/lib/audit/log";
+import { processImage } from "@/lib/image/processImage";
 
 function pathForPage(page: string): string {
   return page === "home" ? "/" : `/${page}`;
@@ -117,6 +117,13 @@ type SniffedImageType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 // `type: "image/png"` based on the extension alone). This is the same
 // principle as "never trust client-supplied price" elsewhere in this app,
 // applied to file uploads.
+const EXTENSION_FOR_TYPE: Record<SniffedImageType, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
 function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
     return "image/jpeg";
@@ -183,26 +190,24 @@ export async function uploadSectionImage(
     return { error: "Unsupported or invalid image file. Use JPG, PNG, WEBP, or GIF." };
   }
 
-  try {
-    // The client (a grocery shop owner with no technical staff, per
-    // CLAUDE.md) can't be expected to pre-resize/compress photos before
-    // uploading — every image gets normalized here instead of rejecting
-    // whatever they hand us. Resize is capped to this site's largest actual
-    // image slot (hero/gallery banners) and never upscales a smaller image;
-    // WebP is a modern, broadly-supported, efficient format regardless of
-    // what was uploaded. `animated: true` on the sharp() call preserves GIF
-    // animation frames in the output instead of collapsing them to one.
-    const processed = await sharp(buffer, { animated: sniffedType === "image/gif" })
-      .resize({ width: 1920, withoutEnlargement: true })
-      .webp({ quality: 82 })
-      .toBuffer();
+  // Compression/resize is a nice-to-have that silently degrades — never a
+  // hard dependency for the upload to succeed. See lib/image/processImage.ts
+  // for the full incident history and why this must use a dynamic import,
+  // not a static one, to make a sharp load failure catchable at all.
+  const { buffer: processed, contentType, extension } = await processImage(
+    buffer,
+    sniffedType,
+    EXTENSION_FOR_TYPE[sniffedType],
+    sniffedType === "image/gif"
+  );
 
+  try {
     const admin = createAdminClient();
-    const path = `${crypto.randomUUID()}.webp`;
+    const path = `${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await admin.storage
       .from(UPLOAD_BUCKET)
-      .upload(path, processed, { contentType: "image/webp", upsert: false });
+      .upload(path, processed, { contentType, upsert: false });
 
     if (uploadError) {
       console.error("[cms] image upload failed:", uploadError);
