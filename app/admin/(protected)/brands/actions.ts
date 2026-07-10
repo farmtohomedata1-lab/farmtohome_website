@@ -1,7 +1,7 @@
 "use server";
 
 import * as Sentry from "@sentry/nextjs";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/cache/safeRevalidate";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
 import { logAdminAction } from "@/lib/audit/log";

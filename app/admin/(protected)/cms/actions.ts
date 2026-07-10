@@ -2,7 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import sharp from "sharp";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/cache/safeRevalidate";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuthedUser } from "@/lib/auth/session";
