@@ -66,17 +66,29 @@ export default function ProductsClient({
   activeTag,
   categories,
   brands,
+  currentPage,
+  totalPages,
 }: {
   initialProducts: AdminProduct[];
   availableTags: SelectOption[];
   activeTag?: string;
   categories: NamedOption[];
   brands: NamedOption[];
+  currentPage: number;
+  totalPages: number;
 }) {
   const [products, setProducts] = useState(initialProducts);
   const [showAddForm, setShowAddForm] = useState(false);
 
   const activeTagLabel = availableTags.find((t) => t.value === activeTag)?.label;
+
+  function pageHref(page: number): string {
+    const params = new URLSearchParams();
+    if (activeTag) params.set("tag", activeTag);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    return qs ? `/admin/products?${qs}` : "/admin/products";
+  }
 
   return (
     <div className="mt-6">
@@ -136,6 +148,34 @@ export default function ProductsClient({
           />
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <nav className="mt-6 flex items-center justify-center gap-1.5" aria-label="Pagination">
+          <Link
+            href={pageHref(Math.max(1, currentPage - 1))}
+            aria-disabled={currentPage === 1}
+            className={`rounded-md border border-gray-300 px-3 py-2 text-sm font-medium ${
+              currentPage === 1 ? "pointer-events-none opacity-40" : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Prev
+          </Link>
+          <span className="px-3 text-sm text-gray-500">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Link
+            href={pageHref(Math.min(totalPages, currentPage + 1))}
+            aria-disabled={currentPage === totalPages}
+            className={`rounded-md border border-gray-300 px-3 py-2 text-sm font-medium ${
+              currentPage === totalPages
+                ? "pointer-events-none opacity-40"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Next
+          </Link>
+        </nav>
+      )}
     </div>
   );
 }
