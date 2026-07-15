@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { markOrderPaid } from "../actions";
 
 export default function MarkPaidButton({ orderId }: { orderId: string }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -13,8 +15,16 @@ export default function MarkPaidButton({ orderId }: { orderId: string }) {
     setError(null);
     startTransition(async () => {
       const result = await markOrderPaid(orderId);
-      if (result.error) setError(result.error);
-      else setDone(true);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setDone(true);
+      // The PAID badge at the top of the page and the "Status" field below
+      // are both read straight from server-rendered props, not this
+      // component's own state — without this they'd stay stuck on the old
+      // status until the admin manually reloaded.
+      router.refresh();
     });
   }
 

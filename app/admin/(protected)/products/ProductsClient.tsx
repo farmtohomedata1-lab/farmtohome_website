@@ -11,6 +11,7 @@ import TextInput from "@/components/admin/TextInput";
 import TextareaField from "@/components/admin/TextareaField";
 import ToggleField from "@/components/admin/ToggleField";
 import ImageUploadField from "../cms/ImageUploadField";
+import ProductSearchBar from "./ProductSearchBar";
 import {
   createProduct,
   deleteProduct,
@@ -64,6 +65,7 @@ export default function ProductsClient({
   initialProducts,
   availableTags,
   activeTag,
+  initialQuery,
   categories,
   brands,
   currentPage,
@@ -72,6 +74,7 @@ export default function ProductsClient({
   initialProducts: AdminProduct[];
   availableTags: SelectOption[];
   activeTag?: string;
+  initialQuery: string;
   categories: NamedOption[];
   brands: NamedOption[];
   currentPage: number;
@@ -85,19 +88,29 @@ export default function ProductsClient({
   function pageHref(page: number): string {
     const params = new URLSearchParams();
     if (activeTag) params.set("tag", activeTag);
+    if (initialQuery) params.set("q", initialQuery);
     if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    return qs ? `/admin/products?${qs}` : "/admin/products";
+  }
+
+  function clearTagHref(): string {
+    const params = new URLSearchParams();
+    if (initialQuery) params.set("q", initialQuery);
     const qs = params.toString();
     return qs ? `/admin/products?${qs}` : "/admin/products";
   }
 
   return (
     <div className="mt-6">
+      <ProductSearchBar initialQuery={initialQuery} activeTag={activeTag} />
+
       {activeTag && (
-        <div className="mb-4 flex items-center justify-between rounded-md bg-brand-green/10 px-4 py-2.5 text-sm text-dark-green">
+        <div className="mb-4 mt-4 flex items-center justify-between rounded-md bg-brand-green/10 px-4 py-2.5 text-sm text-dark-green">
           <span>
             Showing products tagged <strong>{activeTagLabel ?? activeTag}</strong>
           </span>
-          <Link href="/admin/products" className="font-semibold underline">
+          <Link href={clearTagHref()} className="font-semibold underline">
             Clear filter
           </Link>
         </div>
@@ -106,7 +119,7 @@ export default function ProductsClient({
       <button
         type="button"
         onClick={() => setShowAddForm((v) => !v)}
-        className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white"
+        className="mt-4 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white"
       >
         {showAddForm ? "Cancel" : "+ Add Product"}
       </button>
@@ -131,7 +144,8 @@ export default function ProductsClient({
       <div className="mt-6 space-y-3">
         {products.length === 0 && (
           <p className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-            No products{activeTag ? " with this tag" : ""} yet.
+            No products{activeTag ? " with this tag" : ""}
+            {initialQuery ? ` matching "${initialQuery}"` : ""}.
           </p>
         )}
         {products.map((product) => (
@@ -199,14 +213,22 @@ function ProductRow({
   const [isPending, startTransition] = useTransition();
   const [tags, setTags] = useState(product.featuredTags);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [tagError, setTagError] = useState<string | null>(null);
 
   function handleToggleTag(tag: string, checked: boolean) {
     const previous = tags;
     const next = checked ? [...tags, tag] : tags.filter((t) => t !== tag);
     setTags(next);
+    setTagError(null);
     startTransition(async () => {
+      // Previously a failure here reverted the checkbox with no visible
+      // message — indistinguishable, from the admin's side, from the click
+      // "doing nothing." Surface it the same way handleDelete already does.
       const result = await toggleProductTag(product.id, tag, checked);
-      if (result.error) setTags(previous);
+      if (result.error) {
+        setTags(previous);
+        setTagError(result.error);
+      }
     });
   }
 
@@ -331,6 +353,7 @@ function ProductRow({
         </button>
       </div>
       {deleteError && <p className="text-xs text-red-600">{deleteError}</p>}
+      {tagError && <p className="text-xs text-red-600">{tagError}</p>}
     </div>
   );
 }
