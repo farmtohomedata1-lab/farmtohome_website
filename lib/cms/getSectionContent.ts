@@ -42,6 +42,7 @@ export interface FeaturedProduct {
   chargeShipping: boolean;
   taxable: boolean;
   taxOverridePercent: number | null;
+  isBundle: boolean;
 }
 
 /**
@@ -69,6 +70,7 @@ export async function getFeaturedProducts(tag: string): Promise<FeaturedProduct[
       chargeShipping: product.chargeShipping,
       taxable: product.taxable,
       taxOverridePercent: product.taxOverridePercent ? product.taxOverridePercent.toNumber() : null,
+      isBundle: product.isBundle,
     }));
   } catch (err) {
     console.error(`[cms] getFeaturedProducts(${tag}) failed:`, err);

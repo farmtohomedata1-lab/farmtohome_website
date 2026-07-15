@@ -18,16 +18,18 @@ const PAGE_SIZE = 50;
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; page?: string; q?: string }>;
+  searchParams: Promise<{ tag?: string; page?: string; q?: string; bundle?: string }>;
 }) {
-  const { tag, page: pageParam, q } = await searchParams;
+  const { tag, page: pageParam, q, bundle } = await searchParams;
   const activeTag = tag && productTags.some((t) => t.value === tag) ? tag : undefined;
   const query = q?.trim() || undefined;
+  const bundleOnly = bundle === "1";
   const pageRaw = pageParam ? parseInt(pageParam, 10) : 1;
   const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
 
   const conditions: Prisma.ProductWhereInput[] = [];
   if (activeTag) conditions.push({ featuredTags: { has: activeTag } });
+  if (bundleOnly) conditions.push({ isBundle: true });
   if (query) {
     conditions.push({
       OR: [
@@ -76,6 +78,7 @@ export default async function ProductsPage({
         Tag products to control which homepage sections they appear in. Showing{" "}
         {products.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–
         {(currentPage - 1) * PAGE_SIZE + products.length} of {totalCount}
+        {bundleOnly && <> bundle deals</>}
         {query && <> matching “{query}”</>}.
       </p>
 
@@ -90,7 +93,7 @@ export default async function ProductsPage({
         // advances, list doesn't — was the actual pagination bug. A key tied
         // to every input that changes the query forces a clean remount so
         // the new `initialProducts` genuinely takes effect.
-        key={`${currentPage}-${activeTag ?? ""}-${query ?? ""}`}
+        key={`${currentPage}-${activeTag ?? ""}-${query ?? ""}-${bundleOnly ? "b" : ""}`}
         initialProducts={products.map((p) => ({
           id: p.id,
           name: p.name,
@@ -108,10 +111,12 @@ export default async function ProductsPage({
           chargeShipping: p.chargeShipping,
           taxable: p.taxable,
           taxOverridePercent: p.taxOverridePercent ? p.taxOverridePercent.toNumber() : null,
+          isBundle: p.isBundle,
         }))}
         availableTags={productTags}
         activeTag={activeTag}
         initialQuery={query ?? ""}
+        bundleOnly={bundleOnly}
         categories={categories.map((c) => ({ id: c.id, name: c.name }))}
         brands={brands.map((b) => ({ id: b.id, name: b.name }))}
         currentPage={currentPage}

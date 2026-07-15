@@ -149,6 +149,7 @@ export default async function ShopPage({
                 chargeShipping: p.chargeShipping,
                 taxable: p.taxable,
                 taxOverridePercent: p.taxOverridePercent ? p.taxOverridePercent.toNumber() : null,
+                isBundle: p.isBundle,
               }))}
               searchTerm={filters.search}
               clearSearchHref={clearSearchHref(rawParams)}

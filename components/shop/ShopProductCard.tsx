@@ -20,6 +20,9 @@ export interface ShopProduct {
   chargeShipping: boolean;
   taxable: boolean;
   taxOverridePercent: number | null;
+  // Optional: absent for older callers (e.g. a wishlist item saved before
+  // this field existed) — cosmetic only, never affects price/cart/checkout.
+  isBundle?: boolean;
 }
 
 export default function ShopProductCard({ product }: { product: ShopProduct }) {
@@ -33,11 +36,18 @@ export default function ShopProductCard({ product }: { product: ShopProduct }) {
 
   return (
     <article className="relative flex flex-col rounded-md border border-gray-200 bg-white p-4">
-      {discountPercent != null && discountPercent > 0 && (
-        <span className="absolute left-3 top-3 z-10 rounded-sm bg-brand-green px-2 py-1 text-[10px] font-bold uppercase text-white">
-          {discountPercent}% Off
-        </span>
-      )}
+      <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1">
+        {discountPercent != null && discountPercent > 0 && (
+          <span className="rounded-sm bg-brand-green px-2 py-1 text-[10px] font-bold uppercase text-white">
+            {discountPercent}% Off
+          </span>
+        )}
+        {product.isBundle && (
+          <span className="rounded-sm bg-gold px-2 py-1 text-[10px] font-bold uppercase text-dark-green">
+            Bundle Deal
+          </span>
+        )}
+      </div>
       <button
         type="button"
         onClick={() =>

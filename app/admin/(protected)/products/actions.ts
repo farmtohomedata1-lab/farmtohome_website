@@ -64,6 +64,10 @@ export interface ProductFormValues {
   chargeShipping: boolean;
   taxable: boolean;
   taxOverridePercent: number | null; // null = use SiteSettings.taxPercentage
+  // Admin-side organization only (see schema.prisma) — never read by pricing,
+  // cart, or checkout logic. A bundle is priced/checked out exactly like any
+  // other product via this exact same create/update path.
+  isBundle: boolean;
 }
 
 export async function createProduct(values: ProductFormValues): Promise<{ error?: string }> {
@@ -98,6 +102,7 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
         chargeShipping: values.chargeShipping,
         taxable: values.taxable,
         taxOverridePercent: values.taxOverridePercent,
+        isBundle: values.isBundle,
       },
     });
   } catch (err) {
@@ -150,6 +155,7 @@ export async function updateProduct(
         chargeShipping: values.chargeShipping,
         taxable: values.taxable,
         taxOverridePercent: values.taxOverridePercent,
+        isBundle: values.isBundle,
       },
     });
   } catch (err) {

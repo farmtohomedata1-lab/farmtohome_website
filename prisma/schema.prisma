@@ -75,6 +75,14 @@ model Product {
   // Per-product tax rate override. Null = use SiteSettings.taxPercentage.
   // Only consulted when taxable is true and tax is globally enabled.
   taxOverridePercent Decimal? @db.Decimal(5, 2)
+  // Admin-side organization only — a bundle is a completely ordinary
+  // Product row (its own price, compareAtPrice, image, etc.) that happens to
+  // represent a multi-item deal. Has zero effect on pricing, cart, or
+  // checkout: those all key off `price`/`compareAtPrice` exactly like any
+  // other product, unchanged. Exists purely so admin can filter/find bundle
+  // listings among 900+ products, and so the storefront can show a cosmetic
+  // "Bundle Deal" label.
+  isBundle       Boolean   @default(false)
   featuredTags   String[]  @default([])
   categoryId     String?
   category       Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

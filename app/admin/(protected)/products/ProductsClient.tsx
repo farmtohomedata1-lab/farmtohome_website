@@ -37,6 +37,7 @@ export interface AdminProduct {
   chargeShipping: boolean;
   taxable: boolean;
   taxOverridePercent: number | null;
+  isBundle: boolean;
 }
 
 export interface NamedOption {
@@ -59,6 +60,7 @@ const blankForm: ProductFormValues = {
   chargeShipping: true,
   taxable: true,
   taxOverridePercent: null,
+  isBundle: false,
 };
 
 export default function ProductsClient({
@@ -66,6 +68,7 @@ export default function ProductsClient({
   availableTags,
   activeTag,
   initialQuery,
+  bundleOnly,
   categories,
   brands,
   currentPage,
@@ -75,6 +78,7 @@ export default function ProductsClient({
   availableTags: SelectOption[];
   activeTag?: string;
   initialQuery: string;
+  bundleOnly: boolean;
   categories: NamedOption[];
   brands: NamedOption[];
   currentPage: number;
@@ -89,6 +93,7 @@ export default function ProductsClient({
     const params = new URLSearchParams();
     if (activeTag) params.set("tag", activeTag);
     if (initialQuery) params.set("q", initialQuery);
+    if (bundleOnly) params.set("bundle", "1");
     if (page > 1) params.set("page", String(page));
     const qs = params.toString();
     return qs ? `/admin/products?${qs}` : "/admin/products";
@@ -97,13 +102,36 @@ export default function ProductsClient({
   function clearTagHref(): string {
     const params = new URLSearchParams();
     if (initialQuery) params.set("q", initialQuery);
+    if (bundleOnly) params.set("bundle", "1");
+    const qs = params.toString();
+    return qs ? `/admin/products?${qs}` : "/admin/products";
+  }
+
+  function bundleToggleHref(): string {
+    const params = new URLSearchParams();
+    if (activeTag) params.set("tag", activeTag);
+    if (initialQuery) params.set("q", initialQuery);
+    if (!bundleOnly) params.set("bundle", "1");
     const qs = params.toString();
     return qs ? `/admin/products?${qs}` : "/admin/products";
   }
 
   return (
     <div className="mt-6">
-      <ProductSearchBar initialQuery={initialQuery} activeTag={activeTag} />
+      <div className="flex flex-wrap items-center gap-3">
+        <ProductSearchBar initialQuery={initialQuery} activeTag={activeTag} />
+        <Link
+          href={bundleToggleHref()}
+          aria-pressed={bundleOnly}
+          className={`shrink-0 rounded-md border px-3 py-2 text-sm font-medium ${
+            bundleOnly
+              ? "border-brand-green bg-brand-green/10 text-dark-green"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          {bundleOnly ? "✓ Bundles only" : "Bundles only"}
+        </Link>
+      </div>
 
       {activeTag && (
         <div className="mb-4 mt-4 flex items-center justify-between rounded-md bg-brand-green/10 px-4 py-2.5 text-sm text-dark-green">
@@ -144,7 +172,7 @@ export default function ProductsClient({
       <div className="mt-6 space-y-3">
         {products.length === 0 && (
           <p className="rounded-md border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-            No products{activeTag ? " with this tag" : ""}
+            No {bundleOnly ? "bundle " : ""}products{activeTag ? " with this tag" : ""}
             {initialQuery ? ` matching "${initialQuery}"` : ""}.
           </p>
         )}
@@ -264,6 +292,7 @@ function ProductRow({
             chargeShipping: product.chargeShipping,
             taxable: product.taxable,
             taxOverridePercent: product.taxOverridePercent,
+            isBundle: product.isBundle,
           }}
           categories={categories}
           brands={brands}
@@ -301,7 +330,14 @@ function ProductRow({
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-gray-900">{product.name}</p>
+        <p className="truncate text-sm font-semibold text-gray-900">
+          {product.name}
+          {product.isBundle && (
+            <span className="ml-1.5 rounded-sm bg-gold/20 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-dark-green">
+              Bundle
+            </span>
+          )}
+        </p>
         <p className="text-xs text-gray-500">
           {product.pack && `${product.pack} · `}
           {formatPrice(product.price)}
@@ -413,6 +449,7 @@ function ProductForm({
           chargeShipping: values.chargeShipping,
           taxable: values.taxable,
           taxOverridePercent: values.taxOverridePercent,
+          isBundle: values.isBundle,
         });
         setValues(blankForm);
       }
@@ -502,7 +539,20 @@ function ProductForm({
           checked={values.taxable}
           onChange={(v) => update("taxable", v)}
         />
+        <ToggleField
+          label="Is this a bundle deal?"
+          checked={values.isBundle}
+          onChange={(v) => update("isBundle", v)}
+        />
       </div>
+
+      {values.isBundle && (
+        <p className="rounded-md bg-brand-green/10 px-3 py-2 text-xs text-dark-green">
+          This creates a bundle as its own product listing. Set the bundle price below (and an
+          optional Compare-at price to show savings), and upload a photo showing the bundle (e.g.
+          two items together) using the same photo field as any product — no other setup needed.
+        </p>
+      )}
 
       <NumberInput
         label="Override Tax % (optional — blank uses the global rate)"
