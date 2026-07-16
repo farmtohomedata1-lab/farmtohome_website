@@ -251,6 +251,27 @@ export function IconWhatsApp(props: IconProps) {
   );
 }
 
+// Traced from /public/cart_icon.svg (the client-supplied asset) so it can be
+// rendered inline and take `currentColor` — an <img>/next/image reference to
+// the file can't be recolored via CSS, which is why the button rendered it
+// black regardless of the button's white text. Deliberately a separate
+// component from IconCart above (the header's cart icon uses that one) so
+// this only affects the Add to Cart button.
+export function IconCartSolid(props: IconProps) {
+  return (
+    <svg
+      className={props.className}
+      viewBox="0 0 275.58 274.53"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M254.59,170.49c-3.49,15.75-17.25,29.27-33.73,29.26l-128.98-.05c-17.07,0-30.23-14.36-33.6-30.08L27.3,24.95l-16.56-.1C4.1,24.82-.51,17.44.05,11.66.66,5.29,5.94.1,12.84.08l24.06-.08c6.23.09,11.54,4,12.88,10.23l11.22,52.27,201.3.02c7.55,0,14.74,6.57,13.02,14.31l-20.73,93.66ZM217.32,175.02c6.51,0,11.54-3.9,12.86-9.87l17.18-77.6H66.35s16.55,77.24,16.55,77.24c1.31,6.11,5.8,9.84,12.15,10.23h122.27Z" />
+      <circle cx="86.85" cy="249.52" r="25.01" />
+      <circle cx="224.35" cy="249.53" r="25" />
+    </svg>
+  );
+}
+
 function IconFacebook(props: IconProps) {
   return (
     <StrokeIcon {...props}>

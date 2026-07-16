@@ -137,7 +137,6 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
           }}
           variant="card"
           addLabel={productCardLabels.addToCart}
-          showCartIcon
         />
       </div>
     </motion.article>
