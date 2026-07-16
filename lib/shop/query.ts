@@ -49,6 +49,7 @@ export function parseShopFilters(params: ShopSearchParams): ParsedShopFilters {
     maxPrice,
     inStockOnly: statuses.includes("in-stock"),
     onSaleOnly: statuses.includes("on-sale"),
+    bundleOnly: statuses.includes("bundle"),
     sort,
     page,
     search,
@@ -71,6 +72,7 @@ export function buildProductWhere(filters: ParsedShopFilters): Prisma.ProductWhe
   }
   if (filters.inStockOnly) where.inStock = true;
   if (filters.onSaleOnly) where.isOnSale = true;
+  if (filters.bundleOnly) where.isBundle = true;
   if (filters.tag) where.featuredTags = { has: filters.tag };
   if (filters.search) {
     where.OR = [

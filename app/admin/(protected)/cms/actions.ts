@@ -98,7 +98,12 @@ export async function toggleSectionEnabled(
 }
 
 const UPLOAD_BUCKET = "cms-images";
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+// Raised from 5MB: a modern phone photo (uncompressed screenshot, portrait-
+// mode JPEG, etc.) can comfortably exceed 5MB before sharp ever gets a
+// chance to compress it down. Kept well under next.config.ts's Server
+// Actions bodySizeLimit (see there) so this check's own error message is
+// what the admin sees, not a bare framework rejection.
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 // Deliberately no SVG here (it was removed, not just "not added"). SVG is
 // XML and can carry a <script> or an onload= handler — the actual browser
@@ -108,7 +113,21 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 // carry for a format nothing here actually requires. Every image field in
 // this app is a photo (hero banners, products, team portraits) — all
 // naturally raster content.
-type SniffedImageType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+//
+// Also deliberately no HEIC/HEIF (the actual format an iPhone camera saves
+// by default): confirmed directly against this project's installed sharp
+// build (`sharp.format.heif.input.fileSuffix`) that it only decodes the
+// royalty-free AVIF variant, not Apple's patent-encumbered HEIC codec —
+// claiming to accept it would silently produce a broken, undecodable image
+// instead of a clear error. AVIF and TIFF are both confirmed genuinely
+// supported end-to-end by this exact sharp build and are included below.
+type SniffedImageType =
+  | "image/jpeg"
+  | "image/png"
+  | "image/webp"
+  | "image/gif"
+  | "image/avif"
+  | "image/tiff";
 
 // Identifies the file from its actual leading bytes ("magic numbers"),
 // never from the browser-supplied `file.type` or the filename's extension —
@@ -122,6 +141,8 @@ const EXTENSION_FOR_TYPE: Record<SniffedImageType, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "image/avif": "avif",
+  "image/tiff": "tiff",
 };
 
 function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
@@ -165,6 +186,26 @@ function sniffImageType(bytes: Uint8Array): SniffedImageType | null {
   ) {
     return "image/gif";
   }
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 &&
+    bytes[5] === 0x74 &&
+    bytes[6] === 0x79 &&
+    bytes[7] === 0x70 && // "ftyp"
+    bytes[8] === 0x61 &&
+    bytes[9] === 0x76 &&
+    bytes[10] === 0x69 &&
+    (bytes[11] === 0x66 || bytes[11] === 0x73) // "avif" (still) or "avis" (sequence)
+  ) {
+    return "image/avif";
+  }
+  if (
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) || // "II*\0" little-endian
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a)) // "MM\0*" big-endian
+  ) {
+    return "image/tiff";
+  }
   return null;
 }
 
@@ -181,13 +222,17 @@ export async function uploadSectionImage(
     return { error: "No file provided." };
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { error: "Image is too large (max 5MB)." };
+    return { error: "Image is too large (max 15MB)." };
   }
 
   const buffer = new Uint8Array(await file.arrayBuffer());
   const sniffedType = sniffImageType(buffer);
   if (!sniffedType) {
-    return { error: "Unsupported or invalid image file. Use JPG, PNG, WEBP, or GIF." };
+    return {
+      error:
+        "Unsupported or invalid image file. Use JPG, PNG, WEBP, GIF, AVIF, or TIFF. " +
+        "(iPhone HEIC photos aren't supported yet — set your iPhone's camera to \"Most Compatible\" in Settings > Camera > Formats, or share as JPEG/PNG.)",
+    };
   }
 
   // Compression/resize is a nice-to-have that silently degrades — never a
@@ -205,9 +250,29 @@ export async function uploadSectionImage(
     const admin = createAdminClient();
     const path = `${crypto.randomUUID()}.${extension}`;
 
+    // Confirmed root cause of uploaded images silently corrupting (bytes
+    // ballooning ~1.8x and full of U+FFFD replacement characters — the
+    // exact signature of binary data getting round-tripped through a text
+    // encoding): passing a raw Buffer/Uint8Array as the request body here
+    // goes through Next.js's globally-patched `fetch` (installed for its
+    // Data Cache, confirmed live via `fetch.toString()` showing wrapped, not
+    // native, code) — which mishandles raw binary bodies. Wrapping the exact
+    // same bytes in a Blob first was proven, via a controlled A/B upload of
+    // the same buffer both ways, to come back byte-identical every time;
+    // the raw-Buffer path never does.
+    // The `as unknown as BlobPart` below is a pure type-level cast: Node's
+    // Buffer/Uint8Array is a real, valid Blob part at runtime (this is
+    // exactly what the fix above relies on) — TS's DOM lib types Blob's
+    // constructor against a Uint8Array<ArrayBuffer> specifically, which
+    // doesn't structurally match Uint8Array<ArrayBufferLike> (the type
+    // sharp's .toBuffer() and Node's Buffer carry, since ArrayBufferLike
+    // also covers SharedArrayBuffer).
     const { error: uploadError } = await admin.storage
       .from(UPLOAD_BUCKET)
-      .upload(path, processed, { contentType, upsert: false });
+      .upload(path, new Blob([processed as unknown as BlobPart], { type: contentType }), {
+        contentType,
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error("[cms] image upload failed:", uploadError);

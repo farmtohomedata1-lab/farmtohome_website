@@ -122,6 +122,7 @@ export default async function ShopPage({
               maxPrice={filters.maxPrice}
               inStockOnly={filters.inStockOnly}
               onSaleOnly={filters.onSaleOnly}
+              bundleOnly={filters.bundleOnly}
             />
           </Suspense>
 

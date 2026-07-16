@@ -32,6 +32,7 @@ export interface ParsedShopFilters {
   maxPrice: number | null;
   inStockOnly: boolean;
   onSaleOnly: boolean;
+  bundleOnly: boolean;
   sort: SortOption;
   page: number;
   search: string | null;

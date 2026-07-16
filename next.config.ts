@@ -89,13 +89,15 @@ const nextConfig: NextConfig = {
   experimental: {
     // Server Actions default to a 1MB request body limit, independent of any
     // app-level file-size check (see MAX_UPLOAD_BYTES in
-    // app/admin/(protected)/cms/actions.ts, set to 5MB). Without raising this,
-    // every image upload above 1MB — i.e. almost any real phone photo —
-    // never reaches that check at all: Next's own body parser throws first,
-    // and the client sees it as a bare "Failed to fetch" rather than the
-    // app's error message.
+    // app/admin/(protected)/cms/actions.ts, set to 15MB). Without raising
+    // this above that check's own limit, every image upload past this
+    // ceiling never reaches that check at all: Next's own body parser
+    // throws first, and the client sees a bare "Failed to fetch" rather
+    // than the app's actual error message. Kept a few MB above 15MB for the
+    // same reason — multipart form-data framing overhead on top of the raw
+    // file bytes.
     serverActions: {
-      bodySizeLimit: "8mb",
+      bodySizeLimit: "20mb",
     },
   },
   images: {

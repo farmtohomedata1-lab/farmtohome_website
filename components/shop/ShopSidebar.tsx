@@ -23,6 +23,7 @@ export default function ShopSidebar({
   maxPrice,
   inStockOnly,
   onSaleOnly,
+  bundleOnly,
 }: {
   categories: NamedOption[];
   brands: NamedOption[];
@@ -34,6 +35,7 @@ export default function ShopSidebar({
   maxPrice: number | null;
   inStockOnly: boolean;
   onSaleOnly: boolean;
+  bundleOnly: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -56,7 +58,7 @@ export default function ShopSidebar({
     });
   }
 
-  function toggleStatus(value: "in-stock" | "on-sale", checked: boolean) {
+  function toggleStatus(value: "in-stock" | "on-sale" | "bundle", checked: boolean) {
     navigate((params) => {
       const current = params.getAll("status").filter((v) => v !== value);
       const next = checked ? [...current, value] : current;
@@ -106,6 +108,11 @@ export default function ShopSidebar({
             label="On Sale"
             checked={onSaleOnly}
             onChange={(checked) => toggleStatus("on-sale", checked)}
+          />
+          <CheckboxRow
+            label="Bundle Deals"
+            checked={bundleOnly}
+            onChange={(checked) => toggleStatus("bundle", checked)}
           />
         </FilterSection>
 
