@@ -416,6 +416,7 @@ function ProductForm({
   const [values, setValues] = useState(initialValues);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   function update<K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -561,7 +562,12 @@ function ProductForm({
         allowNull
       />
 
-      <ImageUploadField label="Image" value={values.image} onChange={(url) => update("image", url)} />
+      <ImageUploadField
+        label="Image"
+        value={values.image}
+        onChange={(url) => update("image", url)}
+        onUploadingChange={setIsImageUploading}
+      />
 
       <TextareaField
         label="Detailed Description (optional — shown in a 'Product Details' section on the product page)"
@@ -575,10 +581,10 @@ function ProductForm({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isPending}
+          disabled={isPending || isImageUploading}
           className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {isPending ? "Saving..." : submitLabel}
+          {isImageUploading ? "Waiting for image upload..." : isPending ? "Saving..." : submitLabel}
         </button>
         {onCancel && (
           <button

@@ -8,10 +8,21 @@ export default function ImageUploadField({
   label,
   value,
   onChange,
+  onUploadingChange,
 }: {
   label: string;
   value?: string;
   onChange: (url: string) => void;
+  // Lets a parent form (ProductForm, ShippingSettingsClient, SectionForm)
+  // disable its own Save button while an upload here is still in flight.
+  // Without this, Save's disabled state only ever reflected the form's OWN
+  // submit-pending flag — a completely separate useTransition from this
+  // component's upload — so clicking Save right after picking a file (the
+  // natural, fast workflow when you're only changing a photo, e.g. editing
+  // an existing product) could submit before `onChange(result.url)` had
+  // fired, silently saving the OLD image URL. Root cause of the "image
+  // doesn't update on edit" bug.
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
@@ -22,12 +33,17 @@ export default function ImageUploadField({
     setError(null);
     const formData = new FormData();
     formData.set("file", file);
+    onUploadingChange?.(true);
     startTransition(async () => {
-      const result = await uploadSectionImage(formData);
-      if (result.error) {
-        setError(result.error);
-      } else if (result.url) {
-        onChange(result.url);
+      try {
+        const result = await uploadSectionImage(formData);
+        if (result.error) {
+          setError(result.error);
+        } else if (result.url) {
+          onChange(result.url);
+        }
+      } finally {
+        onUploadingChange?.(false);
       }
     });
   }

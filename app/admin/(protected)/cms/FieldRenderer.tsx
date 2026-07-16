@@ -11,10 +11,12 @@ export default function FieldRenderer({
   field,
   value,
   onChange,
+  onImageUploadingChange,
 }: {
   field: FieldDef;
   value: unknown;
   onChange: (value: unknown) => void;
+  onImageUploadingChange?: (uploading: boolean) => void;
 }) {
   if (field.type === "objectList") {
     const items = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
@@ -66,6 +68,7 @@ export default function FieldRenderer({
                     field={itemField}
                     value={item[itemField.key]}
                     onChange={(v) => updateItem(index, itemField.key, v)}
+                    onImageUploadingChange={onImageUploadingChange}
                   />
                 ))}
               </div>
@@ -114,24 +117,38 @@ export default function FieldRenderer({
     );
   }
 
-  return <ScalarField field={field} value={value} onChange={onChange} />;
+  return (
+    <ScalarField
+      field={field}
+      value={value}
+      onChange={onChange}
+      onImageUploadingChange={onImageUploadingChange}
+    />
+  );
 }
 
 function ScalarField({
   field,
   value,
   onChange,
+  onImageUploadingChange,
 }: {
   field: ScalarFieldDef;
   value: unknown;
   onChange: (value: unknown) => void;
+  onImageUploadingChange?: (uploading: boolean) => void;
 }) {
   const id = useId();
   const stringValue = typeof value === "string" ? value : "";
 
   if (field.type === "image") {
     return (
-      <ImageUploadField label={field.label} value={stringValue} onChange={onChange} />
+      <ImageUploadField
+        label={field.label}
+        value={stringValue}
+        onChange={onChange}
+        onUploadingChange={onImageUploadingChange}
+      />
     );
   }
 

@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartQuantity, useCartStore } from "@/lib/cartStore";
 import { buttonMotion } from "@/components/home/motion";
-import { IconCart } from "@/components/home/icons";
 
 export interface CartQuantityControlProduct {
   id: string;
@@ -97,8 +97,10 @@ export default function CartQuantityControl({
         transition={{ duration: 0.18 }}
         className={classes.addButton}
       >
+        {showCartIcon && product.inStock && (
+          <Image src="/cart_icon.svg" alt="" width={14} height={14} className="h-3.5 w-3.5" />
+        )}
         {product.inStock ? addLabel : "Out of Stock"}
-        {showCartIcon && product.inStock && <IconCart className="h-3.5 w-3.5" />}
       </motion.button>
     );
   }

@@ -60,7 +60,7 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
     <motion.article
       variants={fadeUp}
       whileHover={cardLift}
-      className="relative flex flex-col rounded-md border border-gray-200 bg-white p-4"
+      className="relative flex flex-col rounded-md border border-gray-200 bg-white p-5"
     >
       <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-1">
         {discountPercent != null && discountPercent > 0 && (
@@ -99,28 +99,28 @@ export default function ProductCard({ product }: { product: ProductCardProduct }
           className={`h-3.5 w-3.5 ${isWishlisted ? "fill-sale-red text-sale-red" : "text-gray-400"}`}
         />
       </button>
-      <Link href={`/product/${product.id}`} className="flex h-32 items-center justify-center py-2">
+      <Link href={`/product/${product.id}`} className="flex h-36 items-center justify-center py-2">
         {product.image && (
           <Image
             src={product.image}
             alt={product.name || ""}
-            width={120}
-            height={120}
-            className="h-28 w-28"
+            width={132}
+            height={132}
+            className="h-32 w-32"
           />
         )}
       </Link>
       <StarRating rating={product.rating} />
       {product.name && (
         <Link href={`/product/${product.id}`}>
-          <h3 className="mt-2 text-[13px] font-semibold leading-snug text-dark-green hover:underline">
+          <h3 className="mt-2 text-sm font-semibold leading-snug text-dark-green hover:underline">
             {product.name}
           </h3>
         </Link>
       )}
       {product.pack && <p className="mt-1 text-xs text-gray-400">{product.pack}</p>}
       <p className="mt-2 flex items-baseline gap-2">
-        <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} />
+        <PriceDisplay price={product.price} compareAtPrice={product.compareAtPrice} size="cardLarge" />
       </p>
       <div className="mt-3">
         <CartQuantityControl

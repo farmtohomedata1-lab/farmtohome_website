@@ -23,7 +23,7 @@ export default function DealsOfTheDay({
         whileInView="visible"
         viewport={viewportOnce}
         variants={stagger()}
-        className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5"
+        className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
       >
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />

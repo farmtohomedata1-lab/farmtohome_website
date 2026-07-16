@@ -27,6 +27,7 @@ export default function ShippingSettingsClient({
   const [taxOn, setTaxOn] = useState(taxEnabled);
   const [taxRate, setTaxRate] = useState(taxPercentage);
   const [isPending, startTransition] = useTransition();
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
@@ -66,6 +67,7 @@ export default function ShippingSettingsClient({
           label="PayNow QR Code"
           value={qrImageUrl}
           onChange={(url) => setQrImageUrl(url)}
+          onUploadingChange={setIsImageUploading}
         />
       </div>
 
@@ -90,10 +92,10 @@ export default function ShippingSettingsClient({
       <button
         type="button"
         onClick={handleSave}
-        disabled={isPending}
+        disabled={isPending || isImageUploading}
         className="mt-4 rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {isPending ? "Saving..." : "Save"}
+        {isImageUploading ? "Waiting for image upload..." : isPending ? "Saving..." : "Save"}
       </button>
     </div>
   );

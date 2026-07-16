@@ -17,10 +17,19 @@ export default function SectionForm({
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // A section can have several image fields uploading at once (Gallery,
+  // objectList items like Carousel Images) — a counter (not a single
+  // boolean) so one upload finishing doesn't prematurely re-enable Save
+  // while another is still in flight.
+  const [uploadingCount, setUploadingCount] = useState(0);
 
   function updateField(key: string, value: unknown) {
     setStatus("idle");
     setContent((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleImageUploadingChange(uploading: boolean) {
+    setUploadingCount((prev) => prev + (uploading ? 1 : -1));
   }
 
   function handleSave() {
@@ -43,6 +52,7 @@ export default function SectionForm({
           field={field}
           value={content[field.key]}
           onChange={(value) => updateField(field.key, value)}
+          onImageUploadingChange={handleImageUploadingChange}
         />
       ))}
 
@@ -50,10 +60,10 @@ export default function SectionForm({
         <button
           type="button"
           onClick={handleSave}
-          disabled={isPending}
+          disabled={isPending || uploadingCount > 0}
           className="rounded-md bg-brand-green px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
         >
-          {isPending ? "Saving..." : "Save"}
+          {uploadingCount > 0 ? "Waiting for image upload..." : isPending ? "Saving..." : "Save"}
         </button>
         {status === "saved" && (
           <span className="text-sm font-medium text-green-600">Saved</span>
