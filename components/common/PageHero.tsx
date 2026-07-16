@@ -13,7 +13,7 @@ export default function PageHero({
         <h1 className="text-2xl font-bold text-dark-green sm:text-3xl">{heading}</h1>
         <p className="text-sm text-gray-500">
           <Link href="/" className="text-gray-400 hover:text-brand-green">
-            Home
+            Homes
           </Link>
           <span className="mx-2 text-gray-300">/</span>
           <span className="font-medium text-brand-green">{breadcrumbLabel}</span>
