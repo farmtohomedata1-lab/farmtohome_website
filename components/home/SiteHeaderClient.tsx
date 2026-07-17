@@ -15,7 +15,6 @@ import AccountMenu from "./AccountMenu";
 import { fadeIn, buttonMotion } from "./motion";
 import {
   IconCart,
-  IconChevronDown,
   IconClose,
   IconHeart,
   IconMenu,
@@ -46,14 +45,6 @@ function SearchBar() {
       onSubmit={handleSubmit}
       className="flex w-full items-stretch overflow-hidden rounded-md bg-white"
     >
-      <button
-        type="button"
-        className="hidden shrink-0 items-center gap-2 border-r border-gray-200 px-4 text-sm font-medium text-dark-green sm:flex"
-      >
-        <IconMenu className="h-4 w-4" />
-        {header.categoriesLabel}
-        <IconChevronDown className="h-3.5 w-3.5 text-gray-400" />
-      </button>
       <input
         type="search"
         name="q"

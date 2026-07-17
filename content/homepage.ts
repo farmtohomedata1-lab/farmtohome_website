@@ -64,7 +64,6 @@ export interface NavLink {
 }
 
 export interface HeaderContent {
-  categoriesLabel: string;
   searchPlaceholder: string;
   searchButton: string;
   wishlist: string;
@@ -192,7 +191,6 @@ export interface FooterContent {
 }
 
 export const header: HeaderContent = {
-  categoriesLabel: "Categories",
   searchPlaceholder: "Search for products, categories",
   searchButton: "Search",
   wishlist: "Wishlist",

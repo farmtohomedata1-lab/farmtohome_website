@@ -101,11 +101,21 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
-    // Every <Image> on the site was previously rendered with `unoptimized`
-    // (bypassing Next.js's resizing/format-conversion/responsive-srcset
-    // pipeline entirely) purely because no remote host was allowlisted here
-    // — Unsplash for placeholder content, Supabase Storage for real
-    // admin-uploaded photos.
+    // Global kill switch for Next's on-demand image optimization (resizing/
+    // format-conversion/responsive-srcset), added 2026-07-16: confirmed live
+    // that Vercel's Image Optimization quota is exhausted on this project's
+    // plan — EVERY image (local /public files and remote Supabase-hosted
+    // ones alike; verified both directly return 402
+    // OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED) that isn't already cached
+    // from before the quota ran out fails to render, site-wide, not just
+    // product photos. The client can't currently pay for a plan upgrade
+    // (the real, permanent fix — re-enables full optimization with no
+    // trade-off), so this trades responsive/format optimization for
+    // guaranteed image availability everywhere, unconditionally, until that
+    // changes. remotePatterns below is inert while this is true but left in
+    // place — the correct config to revert to (delete this `unoptimized`
+    // line) the moment the plan is upgraded.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "*.supabase.co" },

@@ -15,17 +15,6 @@ export default function Logo({ priority = false }: { priority?: boolean }) {
         width={455}
         height={458}
         priority={priority}
-        // Confirmed live: Vercel's Image Optimization quota is currently
-        // exhausted (every new/uncached transform request -- not just this
-        // file -- returns 402 OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED).
-        // The raw static file serves fine (confirmed 200 directly); only
-        // the on-demand resize/format step is blocked. `unoptimized` skips
-        // that step and serves the source file as-is, so the logo (on
-        // every single page load, header + footer) can't go broken over
-        // this regardless of the site-wide quota's state. This is a
-        // targeted exception, not a general fix -- see the flagged
-        // sitewide product-image risk this same root cause creates.
-        unoptimized
         className="h-10 w-auto sm:h-12 lg:h-14"
       />
     </Link>

@@ -47,8 +47,17 @@ export async function processImage(
 ): Promise<ProcessImageResult> {
   try {
     const sharp = (await sharpLoader()).default;
+    // Capped at 800px (down from 1920px) as of 2026-07-16: with Next's image
+    // optimizer off site-wide (see next.config.ts -- Vercel's optimization
+    // quota is exhausted and the client can't currently pay to raise it),
+    // every image now renders at exactly this stored resolution everywhere
+    // it's used, from a 56px admin thumbnail up to the largest real display
+    // size on the site -- the product detail page's photo, shown at 320px
+    // CSS width (app/product/[id]/page.tsx). 800px covers that with headroom
+    // for ~2.5x-density retina screens, while cutting the bytes every
+    // smaller card/thumbnail downloads by more than half versus 1920px.
     const processed = await sharp(buffer, { animated: isAnimated })
-      .resize({ width: 1920, withoutEnlargement: true })
+      .resize({ width: 800, withoutEnlargement: true })
       .webp({ quality: 82 })
       .toBuffer();
     return { buffer: processed, contentType: "image/webp", extension: "webp" };
