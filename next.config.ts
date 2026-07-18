@@ -62,6 +62,11 @@ const cspDirectives = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Drop the default `X-Powered-By: Next.js` response header — it's pure
+  // stack fingerprinting with no functional value, and one less thing telling
+  // an attacker exactly what to look up known CVEs for. Confirmed present on
+  // the live site during the 2026-07-18 audit; this removes it.
+  poweredByHeader: false,
   // sharp (used by app/admin/(protected)/cms/actions.ts's uploadSectionImage,
   // shared by every admin image upload including product photos) ships a
   // native binary per platform/arch (@img/sharp-<platform>-<arch>). Without

@@ -103,6 +103,19 @@ const UPLOAD_BUCKET = "cms-images";
 // chance to compress it down. Kept well under next.config.ts's Server
 // Actions bodySizeLimit (see there) so this check's own error message is
 // what the admin sees, not a bare framework rejection.
+//
+// BUCKET CONTRACT (root cause of the intermittent "can't update image" bug,
+// diagnosed 2026-07-18): the Supabase Storage bucket's OWN `fileSizeLimit`
+// and `allowedMimeTypes` must be at least as permissive as this check and
+// the sniffable types below. processImage() deliberately falls back to the
+// ORIGINAL bytes/mime whenever sharp compression is skipped (its documented
+// resilience guarantee) — so on that fallback path the bucket receives a
+// large or avif/tiff ORIGINAL, not a tiny webp. If the bucket is stricter
+// than the app (it was: 5MB + no avif/tiff), it rejects those with a 413/415
+// AFTER every app-level check has already passed, defeating the fallback
+// guarantee and surfacing only as a generic failure. The bucket is now set
+// to 20MB + {jpeg,png,webp,gif,avif,tiff}; keep the two in sync if either
+// changes.
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 // Deliberately no SVG here (it was removed, not just "not added"). SVG is
@@ -277,6 +290,23 @@ export async function uploadSectionImage(
     if (uploadError) {
       console.error("[cms] image upload failed:", uploadError);
       Sentry.captureException(uploadError);
+      // Surface the actual reason instead of a generic "try again" — a bucket
+      // that's stricter than the app's own checks rejects here with a 413
+      // (too big) or 415 (mime not allowed), and retrying the same file just
+      // fails again. Give the admin something they can act on.
+      const reason = uploadError.message?.toLowerCase() ?? "";
+      if (reason.includes("exceeded the maximum allowed size")) {
+        return {
+          error:
+            "This image is too large for storage. Please upload a smaller photo (a JPG or PNG under 15MB).",
+        };
+      }
+      if (reason.includes("mime type")) {
+        return {
+          error:
+            "This image format isn't accepted by storage. Please upload a JPG, PNG, or WEBP.",
+        };
+      }
       return { error: "Upload failed. Please try again." };
     }
 
