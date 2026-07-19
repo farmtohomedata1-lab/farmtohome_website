@@ -243,7 +243,7 @@ function CouponForm({
 }: {
   initialValues: CouponFormValues;
   submitLabel: string;
-  onSubmit: (values: CouponFormValues) => Promise<{ error?: string }>;
+  onSubmit: (values: CouponFormValues) => Promise<{ error?: string; id?: string }>;
   onCreated: (coupon: AdminCoupon) => void;
   onSaved?: (values: CouponFormValues) => void;
   onCancel?: () => void;
@@ -268,7 +268,8 @@ function CouponForm({
         onSaved(values);
       } else {
         onCreated({
-          id: crypto.randomUUID(),
+          // Real DB id from the server, so delete/edit work without a refresh.
+          id: result.id ?? crypto.randomUUID(),
           code: values.code.trim().toUpperCase(),
           discountType: values.discountType,
           discountValue: values.discountValue,

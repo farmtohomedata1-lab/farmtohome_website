@@ -42,18 +42,25 @@ export async function updateProfileName(name: string): Promise<{ error?: string 
   return {};
 }
 
-export async function createAddress(values: AddressFormValues): Promise<{ error?: string }> {
+// Returns the real DB id on success so the client tracks the just-added
+// address by its actual primary key — otherwise a fabricated id means the
+// customer can't edit/delete/set-default on a freshly added address until a
+// page refresh (same root cause as the admin createProduct fix).
+export async function createAddress(
+  values: AddressFormValues
+): Promise<{ error?: string; id?: string }> {
   const customer = await requireAuthedCustomer("/account");
 
   const validationError = validateAddress(values);
   if (validationError) return { error: validationError };
 
+  let created;
   try {
-    await prisma.$transaction(async (tx) => {
+    created = await prisma.$transaction(async (tx) => {
       if (values.isDefault) {
         await tx.address.updateMany({ where: { customerId: customer.id }, data: { isDefault: false } });
       }
-      await tx.address.create({
+      return tx.address.create({
         data: {
           customerId: customer.id,
           label: values.label.trim() || null,
@@ -73,7 +80,7 @@ export async function createAddress(values: AddressFormValues): Promise<{ error?
   }
 
   revalidatePath("/account");
-  return {};
+  return { id: created.id };
 }
 
 // Every mutation below is scoped to `customerId: customer.id` in the same

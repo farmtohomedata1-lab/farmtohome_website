@@ -220,7 +220,7 @@ function AddressForm({
 }: {
   initialValues: AddressFormValues;
   submitLabel: string;
-  onSubmit: (values: AddressFormValues) => Promise<{ error?: string }>;
+  onSubmit: (values: AddressFormValues) => Promise<{ error?: string; id?: string }>;
   onCreated: (address: AccountAddress) => void;
   onSaved?: (values: AddressFormValues) => void;
   onCancel?: () => void;
@@ -252,7 +252,9 @@ function AddressForm({
       if (onSaved) {
         onSaved(values);
       } else {
-        onCreated({ id: crypto.randomUUID(), ...values });
+        // Real DB id from the server, so edit/delete/set-default on this
+        // address work without a page refresh.
+        onCreated({ id: result.id ?? crypto.randomUUID(), ...values });
         setValues(blankForm);
       }
     });

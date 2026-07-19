@@ -39,7 +39,12 @@ function toEndOfDay(dateStr: string): Date | null {
   return new Date(`${dateStr}T23:59:59.999`);
 }
 
-export async function createCoupon(values: CouponFormValues): Promise<{ error?: string }> {
+// Returns the real DB id on success — see the note on createProduct in
+// app/admin/(protected)/products/actions.ts; without it the client tracks a
+// just-added coupon by a fabricated id and can't delete/edit it until refresh.
+export async function createCoupon(
+  values: CouponFormValues
+): Promise<{ error?: string; id?: string }> {
   const admin = await requireAuthedUser();
 
   const validationError = validate(values);
@@ -70,7 +75,7 @@ export async function createCoupon(values: CouponFormValues): Promise<{ error?: 
     targetId: coupon.id,
     metadata: { code, discountType: values.discountType, discountValue: values.discountValue },
   });
-  return {};
+  return { id: coupon.id };
 }
 
 export async function updateCoupon(

@@ -408,7 +408,7 @@ function ProductForm({
   categories: NamedOption[];
   brands: NamedOption[];
   submitLabel: string;
-  onSubmit: (values: ProductFormValues) => Promise<{ error?: string }>;
+  onSubmit: (values: ProductFormValues) => Promise<{ error?: string; id?: string }>;
   onCreated: (product: AdminProduct) => void;
   onSaved?: (values: ProductFormValues) => void;
   onCancel?: () => void;
@@ -434,7 +434,9 @@ function ProductForm({
         onSaved(values);
       } else {
         onCreated({
-          id: crypto.randomUUID(),
+          // Use the real DB id the server just returned — never a fabricated
+          // one — so delete/edit/tag on this row work without a page refresh.
+          id: result.id ?? crypto.randomUUID(),
           name: values.name,
           pack: values.pack,
           price: values.price,

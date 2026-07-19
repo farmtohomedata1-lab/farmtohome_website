@@ -70,7 +70,16 @@ export interface ProductFormValues {
   isBundle: boolean;
 }
 
-export async function createProduct(values: ProductFormValues): Promise<{ error?: string }> {
+// Returns the real DB id on success so the client can track the just-created
+// row by its actual primary key. Before this, the client fabricated a random
+// UUID for the new row (it had no other id to use), so any later delete/edit/
+// tag/image-replace on that in-session row targeted a non-existent id and
+// failed with "Failed to delete product." until a full page refresh reloaded
+// the real ids — the root cause of the "delete doesn't actually delete" and
+// "can't replace the image on a just-added product" reports.
+export async function createProduct(
+  values: ProductFormValues
+): Promise<{ error?: string; id?: string }> {
   const admin = await requireAuthedUser();
 
   if (!values.name.trim() || !(values.price > 0)) {
@@ -118,7 +127,7 @@ export async function createProduct(values: ProductFormValues): Promise<{ error?
     metadata: { name: product.name, price: values.price },
   });
   revalidateStorefront();
-  return {};
+  return { id: product.id };
 }
 
 export async function updateProduct(

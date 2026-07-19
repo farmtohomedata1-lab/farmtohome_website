@@ -151,7 +151,7 @@ function NameForm({
 }: {
   initialName?: string;
   submitLabel: string;
-  onSubmit: (name: string) => Promise<{ error?: string }>;
+  onSubmit: (name: string) => Promise<{ error?: string; id?: string }>;
   onCreated: (category: AdminCategory) => void;
   onSaved?: (name: string) => void;
   onCancel?: () => void;
@@ -171,7 +171,8 @@ function NameForm({
       if (onSaved) {
         onSaved(name);
       } else {
-        onCreated({ id: crypto.randomUUID(), name, productCount: 0 });
+        // Real DB id from the server, so delete/edit work without a refresh.
+        onCreated({ id: result.id ?? crypto.randomUUID(), name, productCount: 0 });
         setName("");
       }
     });

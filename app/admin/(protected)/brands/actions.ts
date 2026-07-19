@@ -13,7 +13,10 @@ function revalidateStorefront() {
   revalidatePath("/admin/products");
 }
 
-export async function createBrand(name: string): Promise<{ error?: string }> {
+// Returns the real DB id on success — see the note on createProduct in
+// app/admin/(protected)/products/actions.ts; without it the client tracks a
+// just-added brand by a fabricated id and can't delete/edit it until refresh.
+export async function createBrand(name: string): Promise<{ error?: string; id?: string }> {
   const admin = await requireAuthedUser();
 
   const trimmed = name.trim();
@@ -35,7 +38,7 @@ export async function createBrand(name: string): Promise<{ error?: string }> {
     metadata: { name: trimmed },
   });
   revalidateStorefront();
-  return {};
+  return { id: brand.id };
 }
 
 export async function updateBrand(brandId: string, name: string): Promise<{ error?: string }> {
